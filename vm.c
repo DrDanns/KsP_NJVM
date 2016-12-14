@@ -49,10 +49,6 @@
 #define MEMORY_SIZE 300
 #define REGISTER_SIZE 10
 
-/*
-commit test
-*/
-
 
 typedef unsigned int boolean;
 

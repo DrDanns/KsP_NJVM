@@ -9,10 +9,6 @@
 
 #define VERSION 4
 
-/*
-commit test
-*/
-
 int i;
 int version, instructionSize, sdaVariables;
 unsigned int *p;
