@@ -9,6 +9,10 @@
 
 #define VERSION 4
 
+/*
+commit test
+*/
+
 int i;
 int version, instructionSize, sdaVariables;
 unsigned int *p;
@@ -76,7 +80,7 @@ int main(int argc, char *argv[]){
 		printf("Error: file '%s' has wrong version number.\n",argv[argc-1]);
 		exit(99);
 	}
-	global = malloc(sdaVariables * sizeof(int));
+	global = malloc(sdaVariables * sizeof(StackSlot));
 	
 	p = malloc(instructionSize * sizeof(int));
 
