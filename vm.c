@@ -79,9 +79,9 @@ StackSlot *newIntStackSlot(int value){
 
 StackSlot *newRefStackSlot(ObjRef objRef){
 	StackSlot *result;
+	result = malloc(sizeof(StackSlot));
 	result -> isObjRef = TRUE;
 	result -> u.objRef = objRef;
-	result = malloc(sizeof(StackSlot));
 	if (result == NULL) {
 		printf("no memory");
 		exit(1);
@@ -159,6 +159,15 @@ void pushRef(ObjRef element){
 	}
 }
 
+void pushRefIndex(ObjRef element, int index){
+	if(index < STACK_SIZE){
+		stack[index] = *newRefStackSlot(element);
+	} else {
+		printf("Stack Overflow");
+		exit(99);
+	}
+}
+
 void pushIntRef(int x){
 	ObjRef objRef;
 	objRef = malloc(sizeof(unsigned int) + sizeof(int));
@@ -196,6 +205,19 @@ ObjRef popRef(void){
 	}
 }
 
+ObjRef popRefIndex(int index){
+	if(index!=0){
+		if (stack[index].isObjRef IS_TRUE){
+			return stack[index].u.objRef;
+		}
+		printf("Error: Stack element is no Object Reference");
+		exit(99);
+	} else {
+		printf("Error: Stack empty.\n");
+		exit(99);
+	}
+}
+
 int popIntRef(void){
 	return *(int *)popRef()->data;
 }
@@ -204,8 +226,8 @@ void executeLine(int i){
 	int x;
 	int e1, e2, res;
 	char c;
-	ObjRef objRef;
 	StackSlot stackslot;
+	ObjRef objRef;
 	switch(program_memory[i] & 0xFF000000){
 			case (PUSHC SHIFT24): pushIntRef(program_memory[i]); break;
 			case (ADD SHIFT24): 
@@ -229,8 +251,6 @@ void executeLine(int i){
 			case (DIV SHIFT24):
 				e2 = popIntRef();
 				e1 = popIntRef();
-				pushIntRef(res);
-				break;
 				if(e2!=0){
 					res = e1 / e2;  
 					pushIntRef(res);
@@ -265,72 +285,71 @@ void executeLine(int i){
 			case (PUSHG SHIFT24): {
 				pushRef(global[IMMEDIATE_CURRENT].u.objRef);
 			} break;
-			case (POPG SHIFT24): global[IMMEDIATE_CURRENT] = newRefStackSlot(popRef()); break;
+			case (POPG SHIFT24): global[IMMEDIATE_CURRENT] = *newRefStackSlot(popRef()); break;
 			case (ASF SHIFT24): {
-				push(newIntStackSlot(fp));
+				pushInt(fp);
 				fp = sp;
 				sp = sp + IMMEDIATE_CURRENT;
 			} break;
 			case (RSF SHIFT24): {
 				sp = fp;
-				fp = pop();
+				fp = popInt();
 			} break;
 			case (PUSHL SHIFT24): 
-				objRef = malloc(sizeof(unsigned int) + sizeof(int));
-				objRef -> size = sizeof(int));
-				*(int *)objRef -> data = stack[fp + SIGN_EXTEND(program_memory[i])];
-				pushRef(objRef);
+				objRef = popRef();
+				pushRefIndex(objRef, fp + SIGN_EXTEND(program_memory[i]));
 				break;
 			case (POPL SHIFT24):
 				if ((fp + SIGN_EXTEND(program_memory[i])) < STACK_SIZE) {
-					stack[fp + SIGN_EXTEND(program_memory[i])] = *(int *)popRef() -> data;
+					objRef = popRefIndex(fp + SIGN_EXTEND(program_memory[i]));
+					pushRef(objRef);
 				} else{
 					printf("Out of stack bounds.\n");
 					exit(99);
 				} break;
 			case (EQ SHIFT24):{
-				e2 = pop();
-				e1 = pop();
+				e2 = popIntRef();
+				e1 = popIntRef();
 				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
 				objRef -> size = sizeof(boolean);
 				*(boolean *)objRef -> data = e1 == e2 ? TRUE : FALSE;
 				pushRef(objRef);
 			} break;
 			case (NE SHIFT24):{
-				e2 = pop();
-				e1 = pop();
+				e2 = popIntRef();
+				e1 = popIntRef();
 				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
 				objRef -> size = sizeof(boolean);
 				*(boolean *)objRef -> data = e1 != e2 ? TRUE : FALSE;
 				pushRef(objRef);
 			} break;
 			case (LT SHIFT24):
-				e2 = pop();
-				e1 = pop();
+				e2 = popIntRef();
+				e1 = popIntRef();
 				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
 				objRef -> size = sizeof(boolean);
 				*(boolean *)objRef -> data = e1 < e2 ? TRUE : FALSE;
 				pushRef(objRef);
 			 break;
 			case (LE SHIFT24):{
-				e2 = pop();
-				e1 = pop();
+				e2 = popIntRef();
+				e1 = popIntRef();
 				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
 				objRef -> size = sizeof(boolean);
 				*(boolean *)objRef -> data = e1 <= e2 ? TRUE : FALSE;
 				pushRef(objRef);
 			} break;
 			case (GT SHIFT24):{
-				e2 = pop();
-				e1 = pop();
+				e2 = popIntRef();
+				e1 = popIntRef();
 				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
 				objRef -> size = sizeof(boolean);
 				*(boolean *)objRef -> data = e1 > e2 ? TRUE : FALSE;
 				pushRef(objRef);
 			} break;
 			case (GE SHIFT24):{
-				e2 = pop();
-				e1 = pop();
+				e2 = popIntRef();
+				e1 = popIntRef();
 				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
 				objRef -> size = sizeof(boolean);
 				*(boolean *)objRef -> data = e1 >= e2 ? TRUE : FALSE;
@@ -354,15 +373,15 @@ void executeLine(int i){
 				break;
 			case (POPR SHIFT24): 
 			if(rp < REGISTER_SIZE) {
-				return_register[rp] = newRefStackSlot(popRef()); rp++; 
+				return_register[rp] = *newRefStackSlot(popRef()); rp++; 
 			} else {
 				printf("Error: Register overflow.\n");
 				exit(99);
 			}
 				break;
 			case (DUP SHIFT24): 
-				stackslot=stack[sp-1]; 
-				if(stack[sp-1].isObjRef){
+				stackslot = stack[sp-1]; 
+				if(stackslot.isObjRef){
 					objRef = popRef();
 					pushRef(objRef);
 					pushRef(objRef);
@@ -440,7 +459,14 @@ void debug(int argn, unsigned int program[], int globaln){
 				for(i = sp-1; i >= 0; i--){
 					if(i == fp) printf("fp\t--->");
 					else printf("\t");
-					printf("\t%03d:\t%d\n",i,stack[i]);
+					printf("\t%03d:\t",i);
+					if(stack[i].isObjRef){
+						if((stack[i].u.objRef -> size) == sizeof(char)) printf("Ref: %c\n",*(stack[i].u.objRef -> data));
+						else printf("Ref: %d\n",*(int *)(stack[i].u.objRef -> data));
+					}
+					else {
+						printf("Int: %d\n",stack[i].u.number);
+					}
 				}
 			printf("\t\t --- bottom of stack ---\n");
 			} else if(strcmp(input,"data") == 0|| strcmp(input,"d") == 0) {
