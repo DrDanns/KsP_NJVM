@@ -83,7 +83,7 @@ StackSlot *newRefStackSlot(ObjRef objRef){
 	result -> isObjRef = TRUE;
 	result -> u.objRef = objRef;
 	if (result == NULL) {
-		printf("no memory");
+		printf("Error: no memory\n");
 		exit(1);
 	}
 	
@@ -143,7 +143,7 @@ void pushInt(int element){
 		stack[sp] = *newIntStackSlot(element);
 		sp++;
 	} else {
-		printf("Stack Overflow");
+		printf("Stack Overflow\n");
 		exit(99);
 	}
 }
@@ -154,7 +154,7 @@ void pushRef(ObjRef element){
 		stack[sp] = *newRefStackSlot(element);
 		sp++;
 	} else {
-		printf("Stack Overflow");
+		printf("Stack Overflow\n");
 		exit(99);
 	}
 }
@@ -163,7 +163,7 @@ void pushRefIndex(ObjRef element, int index){
 	if(index < STACK_SIZE){
 		stack[index] = *newRefStackSlot(element);
 	} else {
-		printf("Stack Overflow");
+		printf("Stack Overflow\n");
 		exit(99);
 	}
 }
@@ -183,7 +183,7 @@ int popInt(void){
 		if (stack[sp].isObjRef IS_FAlSE){
 			return stack[sp].u.number;
 		}
-		printf("Error: Stack element is no Integer");
+		printf("Error: Stack element is no Integer\n");
 		exit(99);
 	} else {
 		printf("Error: Stack empty.\n");
@@ -197,7 +197,7 @@ ObjRef popRef(void){
 		if (stack[sp].isObjRef IS_TRUE){
 			return stack[sp].u.objRef;
 		}
-		printf("Error: Stack element is no Object Reference");
+		printf("Error: Top Stack element is no Object Reference\n");
 		exit(99);
 	} else {
 		printf("Error: Stack empty.\n");
@@ -210,7 +210,7 @@ ObjRef popRefIndex(int index){
 		if (stack[index].isObjRef IS_TRUE){
 			return stack[index].u.objRef;
 		}
-		printf("Error: Stack element is no Object Reference");
+		printf("Error: Stack element (index = %d) is no Object Reference\n",index);
 		exit(99);
 	} else {
 		printf("Error: Stack empty.\n");
@@ -229,7 +229,8 @@ void executeLine(int i){
 	StackSlot stackslot;
 	ObjRef objRef;
 	switch(program_memory[i] & 0xFF000000){
-			case (PUSHC SHIFT24): pushIntRef(program_memory[i]); break;
+			case (PUSHC SHIFT24): pushIntRef(IMMEDIATE_CURRENT);
+			break;
 			case (ADD SHIFT24): 
 				e2 = popIntRef();
 				e1 = popIntRef();
@@ -296,10 +297,6 @@ void executeLine(int i){
 				fp = popInt();
 			} break;
 			case (PUSHL SHIFT24): 
-				objRef = popRef();
-				pushRefIndex(objRef, fp + SIGN_EXTEND(program_memory[i]));
-				break;
-			case (POPL SHIFT24):
 				if ((fp + SIGN_EXTEND(program_memory[i])) < STACK_SIZE) {
 					objRef = popRefIndex(fp + SIGN_EXTEND(program_memory[i]));
 					pushRef(objRef);
@@ -307,6 +304,10 @@ void executeLine(int i){
 					printf("Out of stack bounds.\n");
 					exit(99);
 				} break;
+			case (POPL SHIFT24):
+				objRef = popRef();
+				pushRefIndex(objRef, fp + SIGN_EXTEND(program_memory[i]));
+				break;
 			case (EQ SHIFT24):{
 				e2 = popIntRef();
 				e1 = popIntRef();
