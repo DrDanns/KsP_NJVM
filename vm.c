@@ -430,7 +430,10 @@ void debug(int argn, unsigned int program[], int globaln){
 	int breakpoint = -1;
 	
 	int input_int;
-	char input[6];
+	char input[10];
+	
+	void *pointer;
+	StackSlot stackslot;
 	
 	if(argn < MEMORY_SIZE){
 		for(i = 0; i < argn; i++){
@@ -451,7 +454,7 @@ void debug(int argn, unsigned int program[], int globaln){
 		} else if(strcmp(input,"quit") == 0|| strcmp(input,"q") == 0){
 			exit(0);
 		} else if(strcmp(input,"inspect") == 0|| strcmp(input,"i") == 0){
-			printf("DEBUG [inspect]: stack, data, register?\n");
+			printf("DEBUG [inspect]: stack, data, register, object?\n");
 			scanf("%s", &input[0]);
 			if(strcmp(input,"stack") == 0|| strcmp(input,"s") == 0){
 				if(sp == fp) printf("sp, fp");
@@ -462,8 +465,7 @@ void debug(int argn, unsigned int program[], int globaln){
 					else printf("\t");
 					printf("\t%03d:\t",i);
 					if(stack[i].isObjRef){
-						if((stack[i].u.objRef -> size) == sizeof(char)) printf("Ref: %c\n",*(stack[i].u.objRef -> data));
-						else printf("Ref: %d\n",*(int *)(stack[i].u.objRef -> data));
+						printf("Ref: %p\n", (void*)&stack[i]);
 					}
 					else {
 						printf("Int: %d\n",stack[i].u.number);
@@ -480,6 +482,12 @@ void debug(int argn, unsigned int program[], int globaln){
 					printf("register[%02d]:\t%d\n", i, *(int *)return_register[i].u.objRef);
 				}
 				printf("\t --- bottom of register ---\n");
+			} else if(strcmp(input,"object") == 0|| strcmp(input,"o") == 0) {
+				printf("Object reference?\n");
+				if(scanf("%p", &pointer) IS_TRUE){
+					stackslot = *(StackSlot *) pointer;
+					printf("value : %d\n", *(int *)stackslot.u.objRef -> data);
+				}
 			}
 		} else if(strcmp(input,"breakpoint") == 0|| strcmp(input,"b") == 0){
 			printf("DEBUG [breakpoint]: ");
