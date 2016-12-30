@@ -49,6 +49,10 @@
 #define MEMORY_SIZE 300
 #define REGISTER_SIZE 10
 
+void error(char msg[]){
+	printf("Error: %s\n",msg);
+	exit(1);
+}
 
 typedef unsigned int boolean;
 
@@ -69,8 +73,7 @@ StackSlot *newIntStackSlot(int value){
 	StackSlot *result;
 	result = malloc(sizeof(StackSlot));
 	if (result == NULL) {
-		printf("no memory");
-		exit(1);
+		error("no memory");
 	}
 	result -> isObjRef = FALSE;
 	result -> u.number = value;
@@ -83,8 +86,7 @@ StackSlot *newRefStackSlot(ObjRef objRef){
 	result -> isObjRef = TRUE;
 	result -> u.objRef = objRef;
 	if (result == NULL) {
-		printf("Error: no memory\n");
-		exit(1);
+		error("no memory");
 	}
 	
 	return result;
@@ -143,8 +145,7 @@ void pushInt(int element){
 		stack[sp] = *newIntStackSlot(element);
 		sp++;
 	} else {
-		printf("Stack Overflow\n");
-		exit(99);
+		error("Stack Overflow");
 	}
 }
 
@@ -154,8 +155,7 @@ void pushRef(ObjRef element){
 		stack[sp] = *newRefStackSlot(element);
 		sp++;
 	} else {
-		printf("Stack Overflow\n");
-		exit(99);
+		error("Stack Overflow");
 	}
 }
 
@@ -163,8 +163,7 @@ void pushRefIndex(ObjRef element, int index){
 	if(index < STACK_SIZE){
 		stack[index] = *newRefStackSlot(element);
 	} else {
-		printf("Stack Overflow\n");
-		exit(99);
+		error("Stack Overflow");
 	}
 }
 
@@ -183,12 +182,11 @@ int popInt(void){
 		if (stack[sp].isObjRef IS_FAlSE){
 			return stack[sp].u.number;
 		}
-		printf("Error: Stack element is no Integer\n");
-		exit(99);
-	} else {
-		printf("Error: Stack empty.\n");
-		exit(99);
-	}
+		error("Stack element is no Integer");
+	}	
+	error("Stack empty");
+	exit(1);
+	
 }
 
 ObjRef popRef(void){
@@ -197,12 +195,10 @@ ObjRef popRef(void){
 		if (stack[sp].isObjRef IS_TRUE){
 			return stack[sp].u.objRef;
 		}
-		printf("Error: Top Stack element is no Object Reference\n");
-		exit(99);
-	} else {
-		printf("Error: Stack empty.\n");
-		exit(99);
+		error("Top Stack element is no Object Reference");
 	}
+	error("Stack empty");	
+	exit(1);
 }
 
 ObjRef popRefIndex(int index){
@@ -210,12 +206,10 @@ ObjRef popRefIndex(int index){
 		if (stack[index].isObjRef IS_TRUE){
 			return stack[index].u.objRef;
 		}
-		printf("Error: Stack element (index = %d) is no Object Reference\n",index);
-		exit(99);
-	} else {
-		printf("Error: Stack empty.\n");
-		exit(99);
+		error("Indexed Stack element is no Object Reference");
 	}
+	error("Stack empty");
+	exit(1);
 }
 
 int popIntRef(void){
@@ -256,8 +250,7 @@ void executeLine(int i){
 					res = e1 / e2;  
 					pushIntRef(res);
 				} else {
-					printf("Impossible to divide through zero.\n");
-					exit(99);
+					error("Impossible to divide through zero.");
 				}					
 				break;
 			case (MOD SHIFT24): 
@@ -267,8 +260,7 @@ void executeLine(int i){
 					res = e1 % e2;
 					pushIntRef(res);					
 				}else {
-					printf("Impossible to modulo zero.\n");
-					exit(99);
+					error("Impossible to modulo zero.");
 				}
 				break;
 			case (RDINT SHIFT24): scanf("%d", &x); pushIntRef(x); break;
@@ -368,16 +360,14 @@ void executeLine(int i){
 					rp--;
 					pushRef(return_register[rp].u.objRef);
 				} else {
-					printf("Error: Register empty.\n");
-					exit(99);
+					error("Register empty");
 				}
 				break;
 			case (POPR SHIFT24): 
 			if(rp < REGISTER_SIZE) {
 				return_register[rp] = *newRefStackSlot(popRef()); rp++; 
 			} else {
-				printf("Error: Register overflow.\n");
-				exit(99);
+				error("Register overflow");
 			}
 				break;
 			case (DUP SHIFT24): 
@@ -410,8 +400,7 @@ void execute(int argn, unsigned int program[]){
 			program_memory[i] = program[i];
 		}
 	} else {
-		printf("System ran out of memory.\n");
-		exit(99);
+		error("System ran out of memory.");
 	}
 	
 	for(state = 0; state < argn; state++){
@@ -440,8 +429,7 @@ void debug(int argn, unsigned int program[], int globaln){
 			program_memory[i] = program[i];
 		}
 	} else {
-		printf("System ran out of memory.\n");
-		exit(99);
+		error("System ran out of memory");
 	}
 	
 	while(state <= argn && state >= 0){

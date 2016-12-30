@@ -26,12 +26,10 @@ int main(int argc, char *argv[]){
 			exit(0);
 		} else if(strcmp(argv[i],"--debug") == 0){
 			if ( i == (argc-1)) {
-				printf("Error: no code file specified\n");
-				exit(1);
+				error("no code file specified");
 			}
 			else {
 				debug_active = TRUE;
-				
 			}
 		} else if (strcmp(argv[i],"--version") == 0){
 			printf("Ninja Virtual Machine version %d (compiled %s, %s)\n",VERSION,__DATE__,__TIME__);
@@ -50,12 +48,8 @@ int main(int argc, char *argv[]){
 	printf("Error: cannot open code file '%s'\n", argv[argc-1]);
 	exit(1);
 	}
-	
-
-	
 
 	fread (& format [0], sizeof(char), 4, file);
-
 
 	if(!(format[0] == 'N' && 
 		format[1] == 'J' && 
@@ -87,10 +81,6 @@ int main(int argc, char *argv[]){
 	if(debug_active) printf("DEBUG: file '%s' loaded (code size = %d, data size = %d)\n",argv[argc-1],instructionSize,sdaVariables);
 	
 	printf("Ninja Virtual Machine started\n");
-	
-	/*
-	outputText(p);
-	*/
 	
 	if(debug_active) {
 		debug(instructionSize,p, sdaVariables);
