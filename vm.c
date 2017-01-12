@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <bigint.h>
+#include <support.h>
 
 #define HALT	0
 #define PUSHC	1
@@ -56,10 +58,6 @@ void error(char msg[]){
 
 typedef unsigned int boolean;
 
-typedef struct {
-	unsigned int size;
-	unsigned char data[1];
-} *ObjRef;
 
 typedef struct {
 	boolean isObjRef;
