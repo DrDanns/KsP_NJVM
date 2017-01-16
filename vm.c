@@ -391,7 +391,8 @@ void outputList(int argn, unsigned int program[]){
 }
 void execute(int argn, unsigned int program[]){
 	int i;
-	
+
+    newBig(5);
 	
 	if(argn < MEMORY_SIZE){
 		for(i = 0; i < argn; i++){
