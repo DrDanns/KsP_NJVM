@@ -171,14 +171,6 @@ void pushIntRef(int x){
 	pushRef(objRef);
 }
 
-void pushBigRef(int x){
-	ObjRef objRef;
-	objRef = malloc(sizeof(unsigned int) + sizeof(int));
-	objRef -> size = sizeof(int);
-	*(int *)objRef -> data = x;
-	pushRef(objRef);
-}
-
 
 int popInt(void){
 	if(sp!=0){
@@ -282,8 +274,9 @@ void executeLine(int i){
 				}
 				break;
 			case (RDINT SHIFT24): scanf("%d", &x); pushIntRef(x); break;
-			case (WRINT SHIFT24): 
-				bigDump(stdout,popRef());
+			case (WRINT SHIFT24):
+				bip.op1 = bip.res;
+				bigPrint(stdout);
 				break;
 			case (RDCHR SHIFT24): 
 				scanf("%s", &c); objRef = malloc(sizeof(unsigned int) + sizeof(c));
@@ -291,7 +284,8 @@ void executeLine(int i){
 				*(int *)objRef -> data = c;
 				pushRef(objRef); break;
 			case (WRCHR SHIFT24):
-				c = *(char *)popRef()->data;
+				bip.op1 = popRef();
+				c = (char)bigToInt();
 				printf("%c", c);
 				break;
 			case (HALT SHIFT24): state = -99; break;
@@ -495,8 +489,9 @@ void debug(int argn, unsigned int program[], int globaln){
 				printf("Object reference?\n");
 				if(scanf("%p", &pointer) IS_TRUE){
 					stackslot = *(StackSlot *) pointer;
-					printf("Big value : ");
-					bigDump(stdout,stackslot.u.objRef);
+					printf("value : ");
+					bip.op1 = stackslot.u.objRef;
+					bigPrint(stdout);
 					printf("\n");
 				}
 			}
