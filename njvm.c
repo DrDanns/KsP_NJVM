@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <bigint.h>
 #include "vm.c"
 
 #define IMMEDIATE(x) ((x) & 0x00FFFFFF)

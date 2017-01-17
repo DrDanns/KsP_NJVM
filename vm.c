@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <bigint.h>
-#include <support.h>
 
 #define HALT	0
 #define PUSHC	1
@@ -392,7 +390,7 @@ void outputList(int argn, unsigned int program[]){
 void execute(int argn, unsigned int program[]){
 	int i;
 
-    newBig(5);
+    bigFromInt(5);
 	
 	if(argn < MEMORY_SIZE){
 		for(i = 0; i < argn; i++){

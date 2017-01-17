@@ -1,2 +1,2 @@
 #!/bin/sh
-gcc -g -Wall -std=c89 -pedantic -I ./bigint/build/include -L ./bigint/build/lib -lbigint -o njvm njvm.c
+gcc -g -Wall -std=c89 -pedantic -I ./bigint/build/include -o njvm njvm.c bigint.c support.c
