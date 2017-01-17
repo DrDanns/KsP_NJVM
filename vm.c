@@ -171,6 +171,14 @@ void pushIntRef(int x){
 	pushRef(objRef);
 }
 
+void pushBigRef(int x){
+	ObjRef objRef;
+	objRef = malloc(sizeof(unsigned int) + sizeof(int));
+	objRef -> size = sizeof(int);
+	*(int *)objRef -> data = x;
+	pushRef(objRef);
+}
+
 
 int popInt(void){
 	if(sp!=0){
@@ -212,6 +220,14 @@ int popIntRef(void){
 	return *(int *)popRef()->data;
 }
 
+void loadBip(void){
+	ObjRef o1, o2;
+	o2 = popRef();
+	o1 = popRef();
+	bip.op1 = o1;
+	bip.op2 = o2;
+}
+
 void executeLine(int i){
 	int x;
 	int e1, e2, res;
@@ -219,17 +235,23 @@ void executeLine(int i){
 	StackSlot stackslot;
 	ObjRef objRef;
 	switch(program_memory[i] & 0xFF000000){
-			case (PUSHC SHIFT24): pushIntRef(IMMEDIATE_CURRENT);
+			case (PUSHC SHIFT24): 
+				bigFromInt(IMMEDIATE_CURRENT);
+				objRef = bip.res;
+				pushRef(objRef);
 			break;
 			case (ADD SHIFT24): 
-				e2 = popIntRef();
-				e1 = popIntRef();
-				res = e1 + e2; 
-				pushIntRef(res);
+				loadBip();
+				bigAdd();
+				pushRef(bip.res);
+				/*bip.op1 = bip.res;
+				res = bigToInt();
+				pushIntRef(res);*/
 				break;
 			case (SUB SHIFT24): 
 				e2 = popIntRef();
 				e1 = popIntRef();
+				
 				res = e1 - e2;
 				pushIntRef(res);
 				break;
@@ -260,7 +282,9 @@ void executeLine(int i){
 				}
 				break;
 			case (RDINT SHIFT24): scanf("%d", &x); pushIntRef(x); break;
-			case (WRINT SHIFT24): printf("%d",popIntRef()); break;
+			case (WRINT SHIFT24): 
+				bigDump(stdout,popRef());
+				break;
 			case (RDCHR SHIFT24): 
 				scanf("%s", &c); objRef = malloc(sizeof(unsigned int) + sizeof(c));
 				objRef -> size = sizeof(c);
@@ -471,7 +495,9 @@ void debug(int argn, unsigned int program[], int globaln){
 				printf("Object reference?\n");
 				if(scanf("%p", &pointer) IS_TRUE){
 					stackslot = *(StackSlot *) pointer;
-					printf("value : %d\n", *(int *)stackslot.u.objRef -> data);
+					printf("Big value : ");
+					bigDump(stdout,stackslot.u.objRef);
+					printf("\n");
 				}
 			}
 		} else if(strcmp(input,"breakpoint") == 0|| strcmp(input,"b") == 0){
