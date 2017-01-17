@@ -222,7 +222,7 @@ void loadBip(void){
 
 void executeLine(int i){
 	int x;
-	int e1, e2, res;
+	int e1, e2;
 	char c;
 	StackSlot stackslot;
 	ObjRef objRef;
@@ -236,53 +236,42 @@ void executeLine(int i){
 				loadBip();
 				bigAdd();
 				pushRef(bip.res);
-				/*bip.op1 = bip.res;
-				res = bigToInt();
-				pushIntRef(res);*/
 				break;
 			case (SUB SHIFT24): 
-				e2 = popIntRef();
-				e1 = popIntRef();
-				
-				res = e1 - e2;
-				pushIntRef(res);
+				loadBip();
+				bigSub();
+				pushRef(bip.res);
 				break;
 			case (MUL SHIFT24): 
-				e2 = popIntRef();
-				e1 = popIntRef();
-				res = e1 * e2; 
-				pushIntRef(res);
+				loadBip();
+				bigMul();
+				pushRef(bip.res);
 				break;
 			case (DIV SHIFT24):
-				e2 = popIntRef();
-				e1 = popIntRef();
-				if(e2!=0){
-					res = e1 / e2;  
-					pushIntRef(res);
-				} else {
-					error("Impossible to divide through zero.");
-				}					
+				loadBip();
+				/*test auf o2 == 0 notwendig???*/
+				bigDiv();	
+				pushRef(bip.res);	
 				break;
 			case (MOD SHIFT24): 
-				e2 = popIntRef();
-				e1 = popIntRef();
-				if(e2!=0){
-					res = e1 % e2;
-					pushIntRef(res);					
-				}else {
-					error("Impossible to modulo zero.");
-				}
+				loadBip();
+				bigDiv();
+				pushRef(bip.rem);
 				break;
-			case (RDINT SHIFT24): scanf("%d", &x); pushIntRef(x); break;
+			case (RDINT SHIFT24): 
+				scanf("%d", &x); 
+				bigFromInt(x);
+				pushRef(bip.res); 
+				break;
 			case (WRINT SHIFT24):
 				bip.op1 = bip.res;
 				bigPrint(stdout);
 				break;
 			case (RDCHR SHIFT24): 
-				scanf("%s", &c); objRef = malloc(sizeof(unsigned int) + sizeof(c));
-				objRef -> size = sizeof(c);
-				*(int *)objRef -> data = c;
-				pushRef(objRef); break;
+				scanf("%s", &c); 
+				bigFromInt(c);
+				pushRef(bip.res); 
+				break;
 			case (WRCHR SHIFT24):
 				bip.op1 = popRef();
 				c = (char)bigToInt();
@@ -315,52 +304,58 @@ void executeLine(int i){
 				pushRefIndex(objRef, fp + SIGN_EXTEND(program_memory[i]));
 				break;
 			case (EQ SHIFT24):{
-				e2 = popIntRef();
-				e1 = popIntRef();
-				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
-				objRef -> size = sizeof(boolean);
-				*(boolean *)objRef -> data = e1 == e2 ? TRUE : FALSE;
-				pushRef(objRef);
+				loadBip();
+				if (bipCmp() == 0){
+					bigFromInt(TRUE);
+				} else {
+					bigFromInt(FALSE);
+				}
+				pushRef(bip.res);
 			} break;
 			case (NE SHIFT24):{
-				e2 = popIntRef();
-				e1 = popIntRef();
-				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
-				objRef -> size = sizeof(boolean);
-				*(boolean *)objRef -> data = e1 != e2 ? TRUE : FALSE;
-				pushRef(objRef);
+				loadBip();
+				if (bipCmp() != 0){
+					bigFromInt(TRUE);
+				} else {
+					bigFromInt(FALSE);
+				}
+				pushRef(bip.res);
 			} break;
 			case (LT SHIFT24):
-				e2 = popIntRef();
-				e1 = popIntRef();
-				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
-				objRef -> size = sizeof(boolean);
-				*(boolean *)objRef -> data = e1 < e2 ? TRUE : FALSE;
-				pushRef(objRef);
+				loadBip();
+				if (bipCmp() < 0){
+					bigFromInt(TRUE);
+				} else {
+					bigFromInt(FALSE);
+				}
+				pushRef(bip.res);
 			 break;
 			case (LE SHIFT24):{
-				e2 = popIntRef();
-				e1 = popIntRef();
-				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
-				objRef -> size = sizeof(boolean);
-				*(boolean *)objRef -> data = e1 <= e2 ? TRUE : FALSE;
-				pushRef(objRef);
+				loadBip();
+				if (bipCmp() <= 0){
+					bigFromInt(TRUE);
+				} else {
+					bigFromInt(FALSE);
+				}
+				pushRef(bip.res);
 			} break;
 			case (GT SHIFT24):{
-				e2 = popIntRef();
-				e1 = popIntRef();
-				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
-				objRef -> size = sizeof(boolean);
-				*(boolean *)objRef -> data = e1 > e2 ? TRUE : FALSE;
-				pushRef(objRef);
+				loadBip();
+				if (bipCmp() > 0){
+					bigFromInt(TRUE);
+				} else {
+					bigFromInt(FALSE);
+				}
+				pushRef(bip.res);
 			} break;
 			case (GE SHIFT24):{
-				e2 = popIntRef();
-				e1 = popIntRef();
-				objRef = malloc(sizeof(unsigned int) + sizeof(boolean));
-				objRef -> size = sizeof(boolean);
-				*(boolean *)objRef -> data = e1 >= e2 ? TRUE : FALSE;
-				pushRef(objRef);
+				loadBip();
+				if (bipCmp() >= 0){
+					bigFromInt(TRUE);
+				} else {
+					bigFromInt(FALSE);
+				}
+				pushRef(bip.res);
 			} break;
 			case (JMP SHIFT24): state = IMMEDIATE_CURRENT -1; break;
 			case (BRF SHIFT24): if(*(boolean *)popRef()->data IS_FAlSE) state = IMMEDIATE_CURRENT -1; break;
@@ -408,8 +403,6 @@ void outputList(int argn, unsigned int program[]){
 void execute(int argn, unsigned int program[]){
 	int i;
 
-    bigFromInt(5);
-	
 	if(argn < MEMORY_SIZE){
 		for(i = 0; i < argn; i++){
 			program_memory[i] = program[i];
