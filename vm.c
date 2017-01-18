@@ -163,15 +163,6 @@ void pushRefIndex(ObjRef element, int index){
 	}
 }
 
-void pushIntRef(int x){
-	ObjRef objRef;
-	objRef = malloc(sizeof(unsigned int) + sizeof(int));
-	objRef -> size = sizeof(int);
-	*(int *)objRef -> data = x;
-	pushRef(objRef);
-}
-
-
 int popInt(void){
 	if(sp!=0){
 		sp--;
@@ -208,10 +199,6 @@ ObjRef popRefIndex(int index){
 	exit(1);
 }
 
-int popIntRef(void){
-	return *(int *)popRef()->data;
-}
-
 void loadBip(void){
 	ObjRef o1, o2;
 	o2 = popRef();
@@ -220,9 +207,18 @@ void loadBip(void){
 	bip.op2 = o2;
 }
 
+void loadBipDiv(void){
+	ObjRef o1, o2;
+	o2 = popRef();
+	o1 = popRef();
+	bip.op1 = o2;
+	if(bigToInt() == 0) error("division by zero");
+	bip.op1 = o1;
+	bip.op2 = o2;
+}
+
 void executeLine(int i){
 	int x;
-	int e1, e2;
 	char c;
 	StackSlot stackslot;
 	ObjRef objRef;
@@ -248,13 +244,13 @@ void executeLine(int i){
 				pushRef(bip.res);
 				break;
 			case (DIV SHIFT24):
-				loadBip();
+				loadBipDiv();
 				/*test auf o2 == 0 notwendig???*/
 				bigDiv();	
 				pushRef(bip.res);	
 				break;
 			case (MOD SHIFT24): 
-				loadBip();
+				loadBipDiv();
 				bigDiv();
 				pushRef(bip.rem);
 				break;
@@ -264,7 +260,7 @@ void executeLine(int i){
 				pushRef(bip.res); 
 				break;
 			case (WRINT SHIFT24):
-				bip.op1 = bip.res;
+				bip.op1 = popRef();
 				bigPrint(stdout);
 				break;
 			case (RDCHR SHIFT24): 
@@ -305,7 +301,7 @@ void executeLine(int i){
 				break;
 			case (EQ SHIFT24):{
 				loadBip();
-				if (bipCmp() == 0){
+				if (bigCmp() == 0){
 					bigFromInt(TRUE);
 				} else {
 					bigFromInt(FALSE);
@@ -314,7 +310,7 @@ void executeLine(int i){
 			} break;
 			case (NE SHIFT24):{
 				loadBip();
-				if (bipCmp() != 0){
+				if (bigCmp() != 0){
 					bigFromInt(TRUE);
 				} else {
 					bigFromInt(FALSE);
@@ -323,7 +319,7 @@ void executeLine(int i){
 			} break;
 			case (LT SHIFT24):
 				loadBip();
-				if (bipCmp() < 0){
+				if (bigCmp() < 0){
 					bigFromInt(TRUE);
 				} else {
 					bigFromInt(FALSE);
@@ -332,7 +328,7 @@ void executeLine(int i){
 			 break;
 			case (LE SHIFT24):{
 				loadBip();
-				if (bipCmp() <= 0){
+				if (bigCmp() <= 0){
 					bigFromInt(TRUE);
 				} else {
 					bigFromInt(FALSE);
@@ -341,7 +337,7 @@ void executeLine(int i){
 			} break;
 			case (GT SHIFT24):{
 				loadBip();
-				if (bipCmp() > 0){
+				if (bigCmp() > 0){
 					bigFromInt(TRUE);
 				} else {
 					bigFromInt(FALSE);
@@ -350,7 +346,7 @@ void executeLine(int i){
 			} break;
 			case (GE SHIFT24):{
 				loadBip();
-				if (bipCmp() >= 0){
+				if (bigCmp() >= 0){
 					bigFromInt(TRUE);
 				} else {
 					bigFromInt(FALSE);
