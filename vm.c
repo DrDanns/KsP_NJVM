@@ -220,6 +220,7 @@ void loadBipDiv(void){
 void executeLine(int i){
 	int x;
 	char c;
+	char s[100];
 	StackSlot stackslot;
 	ObjRef objRef;
 	switch(program_memory[i] & 0xFF000000){
@@ -245,7 +246,6 @@ void executeLine(int i){
 				break;
 			case (DIV SHIFT24):
 				loadBipDiv();
-				/*test auf o2 == 0 notwendig???*/
 				bigDiv();	
 				pushRef(bip.res);	
 				break;
@@ -255,9 +255,15 @@ void executeLine(int i){
 				pushRef(bip.rem);
 				break;
 			case (RDINT SHIFT24): 
-				scanf("%d", &x); 
-				bigFromInt(x);
-				pushRef(bip.res); 
+				scanf("%s", s);
+				/*
+				überprüfen auf digit only
+				*/
+				printf("%s", s);
+				/*
+				objRef als Big definieren
+				pushRef(objRef); 
+				*/
 				break;
 			case (WRINT SHIFT24):
 				bip.op1 = popRef();

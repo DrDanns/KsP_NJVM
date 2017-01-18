@@ -8,7 +8,7 @@
 #define TEXT_LENGTH 80
 #define INSTRUCTION_SIZE 30
 
-#define VERSION 5
+#define VERSION 6
 
 int i;
 int version, instructionSize, sdaVariables;
