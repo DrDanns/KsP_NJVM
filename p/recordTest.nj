@@ -1,0 +1,38 @@
+type Point = record {
+  Integer x;
+  Integer y;
+};
+
+void move(Point p, Point delta) {
+  p.x = p.x + delta.x;
+  p.y = p.y + delta.y;
+}
+
+void main() {
+  local Integer a;
+  local Integer b;
+  local Integer c;
+  local Integer d;
+  local Point pp;
+  local Point pq;
+
+
+  a = 5;
+  b = 10;
+  c = 4;
+  d = 8;
+
+
+  pp = new(Point);
+  pp.x = a;
+  pp.y = b;
+  pq = new(Point);
+  pq.x = c;
+  pq.y = d;
+
+  writeInteger(pp.x);
+  writeInteger(pp.y);
+  move(pp, pq);
+  writeInteger(pp.x);
+  writeInteger(pp.y);
+}
