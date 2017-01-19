@@ -87,7 +87,6 @@ ObjRef getIndexedObjRef(ObjRef origin, int index){
 
 ObjRef newPrimObject(int dataSize) {
   ObjRef objRef;
-
   objRef = malloc(sizeof(unsigned int) +
                   dataSize * sizeof(unsigned char));
   if (objRef == NULL) {
@@ -101,7 +100,6 @@ ObjRef newRecordObject(int number) {
     int dataSize;
     ObjRef objRef;
     int i;
-
     dataSize = sizeof(unsigned int) + (number * sizeof(ObjRef));
 
     objRef = malloc(dataSize);
@@ -109,9 +107,9 @@ ObjRef newRecordObject(int number) {
     if (objRef == NULL) {
         fatalError("newRecordObject() got no memory");
     }
-    objRef->size = dataSize | MSB;
+    objRef->size = number | MSB;
     for(i = 0; i < number; i++) {
-        OBJ_REF(i)->data = NULL;
+		OBJ_REF(i) = NULL;
     }
 
     return objRef;
@@ -364,8 +362,7 @@ void executeLine(int i){
 					objRef = popRefIndex(fp + SIGN_EXTEND(program_memory[i]));
 					pushRef(objRef);
 				} else{
-					printf("Out of stack bounds.\n");
-					exit(99);
+					error("Out of Bounds");
 				} break;
 			case (POPL SHIFT24):
 				objRef = popRef();
@@ -586,11 +583,13 @@ void debug(int argn, unsigned int program[], int globaln){
 						bigPrint(stdout);
 						printf("\n");
 					} else {
-						printf("Contained objects:");
-						if(GET_SIZE(objRef) == 0) printf("\tNULL");
+						printf("Contained objects: %d\n",GET_SIZE(objRef));
+						if(objRef == NULL || GET_SIZE(objRef) == 0) printf("\tNULL");
 						else
 						for(i = 0; i < GET_SIZE(objRef); i++){
-							printf("\t%d\tRef: %p\n",i,(void*)&OBJ_REF(i));							
+							printf("\t%03d\tRef: ",i);		
+							if ((void*)OBJ_REF(i) == NULL) printf("NULL\n");
+							else printf("%p\n",(void*)&OBJ_REF(i));	
 						}
 					}
 				}
