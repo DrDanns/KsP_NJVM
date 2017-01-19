@@ -60,6 +60,7 @@
 #define GET_SIZE(objRef) ((objRef)->size & ~MSB)
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
 #define OBJ_REF(i) *(ObjRef *)getIndexedObjRef(objRef,i)
+#define IS_NULL(objRef) ((void*)objRef == NULL)
 
 #define STACK_SIZE 1000
 #define MEMORY_SIZE 300
@@ -247,6 +248,11 @@ int popInt(void){
 	
 }
 
+void pushNil(void){
+	ObjRef objRef = NULL;
+	pushRef(objRef);
+}
+
 ObjRef popRef(void){
 	if(sp!=0){
 		sp--;
@@ -351,7 +357,9 @@ void executeLine(int i){
 			case (ASF SHIFT24): {
 				pushInt(fp);
 				fp = sp;
-				sp = sp + IMMEDIATE_CURRENT;
+				for(i = IMMEDIATE_CURRENT; i > 0; i--){
+					pushNil();;
+				}
 			} break;
 			case (RSF SHIFT24): {
 				sp = fp;
@@ -555,7 +563,8 @@ void debug(int argn, unsigned int program[], int globaln){
 					else printf("\t");
 					printf("\t%03d:\t",i);
 					if(stack[i].isObjRef){
-						printf("Ref: %p\n", (void*)&stack[i]);
+						if(IS_NULL(stack[i].u.objRef)) printf("Ref : NULL\n"); 
+						else printf("Ref: %p\n", (void*)&stack[i]);
 					}
 					else {
 						printf("Int: %d\n",stack[i].u.number);
@@ -564,12 +573,22 @@ void debug(int argn, unsigned int program[], int globaln){
 			printf("\t\t --- bottom of stack ---\n");
 			} else if(strcmp(input,"data") == 0|| strcmp(input,"d") == 0) {
 				for(i = 0; i < globaln; i++){
-					printf("data[%04d]:\t%d\n", i, *(int *)global[i].u.objRef -> data);
+					printf("data[%04d]:\t", i);
+					if(!IS_NULL(global[i].u.objRef)){
+					bip.op1 = global[i].u.objRef;
+					bigPrint(stdout);
+					} else printf("NULL");
+					printf("\n");
 				}
 				printf("\t --- bottom of data ---\n");
 			} else if(strcmp(input,"register") == 0|| strcmp(input,"r") == 0) {
 				for(i = 0; i < REGISTER_SIZE; i++){
-					printf("register[%02d]:\t%d\n", i, *(int *)return_register[i].u.objRef);
+					printf("register[%02d]:\t", i);
+					if(!IS_NULL(return_register[i].u.objRef)){
+					bip.op1 = return_register[i].u.objRef;
+					bigPrint(stdout);
+					} else printf("NULL");
+					printf("\n");
 				}
 				printf("\t --- bottom of register ---\n");
 			} else if(strcmp(input,"object") == 0|| strcmp(input,"o") == 0) {
@@ -584,11 +603,9 @@ void debug(int argn, unsigned int program[], int globaln){
 						printf("\n");
 					} else {
 						printf("Contained objects: %d\n",GET_SIZE(objRef));
-						if(objRef == NULL || GET_SIZE(objRef) == 0) printf("\tNULL");
-						else
 						for(i = 0; i < GET_SIZE(objRef); i++){
 							printf("\t%03d\tRef: ",i);		
-							if ((void*)OBJ_REF(i) == NULL) printf("NULL\n");
+							if (IS_NULL(OBJ_REF(i))) printf("NULL\n");
 							else printf("%p\n",(void*)&OBJ_REF(i));	
 						}
 					}
