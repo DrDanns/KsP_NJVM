@@ -423,11 +423,20 @@ void executeLine(int i){
 				}
 				break;
 			case (NEW SHIFT24):
+
 				break;
 			case (GETF SHIFT24):
+				stack[fp] = stack[fp].IMMEDIATE_CURRENT;
                 break;
 			case (PUTF SHIFT24):
-                break;
+                if(fp!=0) {
+                    fp--;
+                    if (stack[sp].isObjRef IS_FAlSE) {
+                        stack[fp].IMMEDIATE_CURRENT = stack[fp+1].IMMEDIATE_CURRENT;
+                    }
+                    fp--;
+                }
+				break;
 			case (NEWA SHIFT24):
                 break;
 			case (GETFA SHIFT24):
