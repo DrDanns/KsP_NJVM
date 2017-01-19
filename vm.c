@@ -486,6 +486,7 @@ void executeLine(int i){
 			case (GETSZ SHIFT24):
                 break;
 			case (PUSHN SHIFT24):
+                pushNil();
                 break;
 			case (REFEQ SHIFT24):
                 break;
