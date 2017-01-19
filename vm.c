@@ -59,6 +59,7 @@
 #define IS_PRIM(objRef) ((( objRef)->size & MSB) == 0)
 #define GET_SIZE(objRef) ((objRef)->size & ~MSB)
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
+#define OBJ_REF(i) *(ObjRef *)getIndexedObjRef(objRef,i)
 
 #define STACK_SIZE 1000
 #define MEMORY_SIZE 300
@@ -448,7 +449,7 @@ void executeLine(int i){
 			case (PUTF SHIFT24):
                 objRefVal = popRef();
 				objRef = popRef();
-				*(ObjRef *)getIndexedObjRef(objRef,IMMEDIATE_CURRENT) -> data = objRefVal;
+				OBJ_REF(IMMEDIATE_CURRENT) -> data = objRefVal;
 				break;
 			case (NEWA SHIFT24):
                 break;
@@ -505,6 +506,7 @@ void debug(int argn, unsigned int program[], int globaln){
 	
 	void *pointer;
 	StackSlot stackslot;
+	ObjRef objRef;
 	
 	if(argn < MEMORY_SIZE){
 		for(i = 0; i < argn; i++){
@@ -556,10 +558,20 @@ void debug(int argn, unsigned int program[], int globaln){
 				printf("Object reference?\n");
 				if(scanf("%p", &pointer) IS_TRUE){
 					stackslot = *(StackSlot *) pointer;
-					printf("value : ");
-					bip.op1 = stackslot.u.objRef;
-					bigPrint(stdout);
-					printf("\n");
+					objRef = stackslot.u.objRef;
+					if(IS_PRIM(objRef)){
+						printf("value : ");
+						bip.op1 = stackslot.u.objRef;
+						bigPrint(stdout);
+						printf("\n");
+					} else {
+						printf("Contained objects:");
+						if(GET_SIZE(objRef) == 0) printf("\tNULL");
+						else
+						for(i = 0; i < GET_SIZE(objRef); i++){
+							printf("\t%d\tRef: %p\n",i,(void*)&OBJ_REF(i));							
+						}
+					}
 				}
 			}
 		} else if(strcmp(input,"breakpoint") == 0|| strcmp(input,"b") == 0){
