@@ -74,6 +74,17 @@ void fatalError(char *msg) {
   error(msg);
 }
 
+ObjRef getIndexedObjRef(ObjRef origin, int index){
+    int i;
+    ObjRef res;
+    if(index >= GET_SIZE(origin)) error("Array out of bounds");
+    res = (ObjRef)GET_REFS(origin);
+    for(i = 0; i < index; i++){
+        res = res + res -> size;
+    }
+    return res;
+}
+
 ObjRef newPrimObject(int dataSize) {
   ObjRef objRef;
 
@@ -86,15 +97,24 @@ ObjRef newPrimObject(int dataSize) {
   return objRef;
 }
 
-ObjRef getIndexedObjRef(ObjRef origin, int index){
-	int i;
-	ObjRef res;
-	if(index >= GET_SIZE(origin)) error("Array out of bounds");
-	res = (ObjRef)GET_REFS(origin);
-	for(i = 0; i < index; i++){
-		res = res + res -> size;
-	}
-	return res;
+ObjRef newRecordObject(int number) {
+    int dataSize;
+    ObjRef objRef;
+    int i;
+
+    dataSize = sizeof(unsigned int) + (number * sizeof(ObjRef));
+
+    objRef = malloc(dataSize);
+
+    if (objRef == NULL) {
+        fatalError("newRecordObject() got no memory");
+    }
+    objRef->size = dataSize | MSB;
+    for(i = 0; i < number; i++) {
+        OBJ_REF(i)->data = NULL;
+    }
+
+    return objRef;
 }
 
 typedef unsigned int boolean;
@@ -440,7 +460,8 @@ void executeLine(int i){
 				}
 				break;
 			case (NEW SHIFT24):
-
+                objRef = newRecordObject(IMMEDIATE_CURRENT);
+				pushRef(objRef);
 				break;
 			case (GETF SHIFT24):
 				objRef = popRef();
