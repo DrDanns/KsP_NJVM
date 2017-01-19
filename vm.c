@@ -77,7 +77,7 @@ void fatalError(char *msg) {
 
 void printBig(ObjRef objRef){
 	bip.op1 = objRef;
-	/*bigPrint(stdout);*/
+	bigPrint(stdout);
 }
 
 ObjRef getIndexedObjRef(ObjRef origin, int index){
@@ -637,18 +637,22 @@ void debug(int argn, unsigned int program[], int globaln){
 					objRef = stackslot.u.objRef;
 					if(IS_PRIM(objRef)){
 						printf("value : ");
-						/*printBig(stackslot.u.objRef);*/
+						printBig(stackslot.u.objRef);
 						printf("\n");
 					} else {
 						printf("Contained objects: %d\n",GET_SIZE(objRef));
 						for(i = 0; i < GET_SIZE(objRef); i++){
 							printf("\t%03d\tRef: ",i);	
 							if (IS_NULL(OBJ_REF(i))) printf("NULL\n");
-							else if(IS_PRIM(OBJ_REF(i))){
-								bip.op1 = OBJ_REF(i);
-								/*bigPrint(stdout);*/
-								printf("\n");
-							} else printf("%p\n",(void*)&OBJ_REF(i));	
+							else if(IS_PRIM(getIndexedObjRef(objRef,i))){
+								bip.op1 = getIndexedObjRef(objRef,i);
+                                printf("%p\t", (void *)&bip.op1->data);
+                                printf("Primitive\n");
+							} else {
+                                bip.op1 = getIndexedObjRef(objRef,i);
+                                printf("%p\t", (void *)&bip.op1->data);
+                                printf("Record/Array\n");
+                            }
 						}
 					}
 				} else error("input error");
