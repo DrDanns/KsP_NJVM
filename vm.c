@@ -75,15 +75,21 @@ void fatalError(char *msg) {
   error(msg);
 }
 
+void printBig(ObjRef objRef){
+	bip.op1 = objRef;
+	/*bigPrint(stdout);*/
+}
+
 ObjRef getIndexedObjRef(ObjRef origin, int index){
     int i;
-    ObjRef res;
+    ObjRef *res;
+	if(IS_PRIM(origin)) error("Origin is primitive not a record");
     if(index >= GET_SIZE(origin)) error("Array out of bounds");
-    res = (ObjRef)GET_REFS(origin);
+    res = (ObjRef *)GET_REFS(origin);
     for(i = 0; i < index; i++){
-        res = res + res -> size;
+        res = res + ((ObjRef)res) -> size;
     }
-    return res;
+    return (ObjRef)res;
 }
 
 ObjRef newPrimObject(int dataSize) {
@@ -308,7 +314,7 @@ void executeLine(int i){
 	boolean *p1;
 	boolean *p2;
 	StackSlot stackslot;
-	ObjRef objRef,objRefVal;
+	ObjRef objRef,objRefIndex,objRefVal;
 	switch(program_memory[i] & 0xFF000000){
 			case (PUSHC SHIFT24): 
 				bigFromInt(IMMEDIATE_CURRENT);
@@ -347,7 +353,7 @@ void executeLine(int i){
 				break;
 			case (WRINT SHIFT24):
 				bip.op1 = popRef();
-				bigPrint(stdout);
+				/*bigPrint(stdout);*/
 				break;
 			case (RDCHR SHIFT24): 
 				scanf("%s", &c); 
@@ -482,12 +488,31 @@ void executeLine(int i){
 				OBJ_REF(IMMEDIATE_CURRENT) -> data = objRefVal;
 				break;
 			case (NEWA SHIFT24):
+				objRefVal = popRef();
+				bip.op1 = objRefVal;
+				x = bigToInt();
+				objRef = newRecordObject(x);
                 break;
 			case (GETFA SHIFT24):
+				objRefIndex = popRef();
+				objRef = popRef();
+				bip.op1 = objRefIndex;
+				x = bigToInt();
+				pushRef(OBJ_REF(x));
                 break;
 			case (PUTFA SHIFT24):
+				objRefVal = popRef();
+				objRefIndex = popRef();
+				objRef = popRef();
+				bip.op1 = objRefIndex;
+				x = bigToInt();
+				OBJ_REF(x) -> data = objRefVal;
                 break;
 			case (GETSZ SHIFT24):
+				objRef = popRef();
+				x = GET_SIZE(objRef);
+				bigFromInt(x);
+				pushRef(bip.res);
                 break;
 			case (PUSHN SHIFT24):
                 pushNil();
@@ -580,7 +605,8 @@ void debug(int argn, unsigned int program[], int globaln){
 					if(stack[i].isObjRef){
 						if(IS_NULL(stack[i].u.objRef)) printf("Ref : NULL\n"); 
 					    else {
-							printf("Ref: %p\n", (void*)&stack[i]);
+							printf("Ref: %p\t", (void*)&stack[i]);
+							printf(IS_PRIM(stack[i].u.objRef) ? "Primitive\n" : "Record/Array\n"); 
 						}
 					} else {
 						printf("Int: %d\n",stack[i].u.number);
@@ -599,7 +625,7 @@ void debug(int argn, unsigned int program[], int globaln){
 					printf("register[%02d]:\t", i);
 					if(!IS_NULL(return_register[i].u.objRef)){
 					bip.op1 = return_register[i].u.objRef;
-					bigPrint(stdout);
+					/*bigPrint(stdout);*/
 					} else {printf("NULL");}
 					printf("\n");
 				}
@@ -611,15 +637,18 @@ void debug(int argn, unsigned int program[], int globaln){
 					objRef = stackslot.u.objRef;
 					if(IS_PRIM(objRef)){
 						printf("value : ");
-						bip.op1 = stackslot.u.objRef;
-						bigPrint(stdout);
+						/*printBig(stackslot.u.objRef);*/
 						printf("\n");
 					} else {
 						printf("Contained objects: %d\n",GET_SIZE(objRef));
 						for(i = 0; i < GET_SIZE(objRef); i++){
-							printf("\t%03d\tRef: ",i);		
+							printf("\t%03d\tRef: ",i);	
 							if (IS_NULL(OBJ_REF(i))) printf("NULL\n");
-							else printf("%p\n",(void*)&OBJ_REF(i));	
+							else if(IS_PRIM(OBJ_REF(i))){
+								bip.op1 = OBJ_REF(i);
+								/*bigPrint(stdout);*/
+								printf("\n");
+							} else printf("%p\n",(void*)&OBJ_REF(i));	
 						}
 					}
 				} else error("input error");
