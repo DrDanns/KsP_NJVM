@@ -235,6 +235,14 @@ void pushRefIndex(ObjRef element, int index){
 	}
 }
 
+void pushBooleanRef(boolean b){
+	ObjRef objRef;
+	objRef = malloc(sizeof(int) + sizeof(boolean));
+	objRef -> size = sizeof(boolean);
+	*(boolean *)objRef -> data = b;
+	pushRef(objRef);
+}
+
 int popInt(void){
 	if(sp!=0){
 		sp--;
@@ -297,6 +305,8 @@ void loadBipDiv(void){
 void executeLine(int i){
 	int x;
 	char c;
+	boolean *p1;
+	boolean *p2;
 	StackSlot stackslot;
 	ObjRef objRef,objRefVal;
 	switch(program_memory[i] & 0xFF000000){
@@ -379,56 +389,50 @@ void executeLine(int i){
 			case (EQ SHIFT24):{
 				loadBip();
 				if (bigCmp() == 0){
-					bigFromInt(TRUE);
+					pushBooleanRef(TRUE);
 				} else {
-					bigFromInt(FALSE);
+					pushBooleanRef(FALSE);
 				}
-				pushRef(bip.res);
 			} break;
 			case (NE SHIFT24):{
 				loadBip();
 				if (bigCmp() != 0){
-					bigFromInt(TRUE);
+					pushBooleanRef(TRUE);
 				} else {
-					bigFromInt(FALSE);
+					pushBooleanRef(FALSE);
 				}
-				pushRef(bip.res);
 			} break;
 			case (LT SHIFT24):
 				loadBip();
 				if (bigCmp() < 0){
-					bigFromInt(TRUE);
+					pushBooleanRef(TRUE);
 				} else {
-					bigFromInt(FALSE);
+					pushBooleanRef(FALSE);
 				}
-				pushRef(bip.res);
 			 break;
 			case (LE SHIFT24):{
 				loadBip();
 				if (bigCmp() <= 0){
-					bigFromInt(TRUE);
+					pushBooleanRef(TRUE);
 				} else {
-					bigFromInt(FALSE);
+					pushBooleanRef(FALSE);
 				}
-				pushRef(bip.res);
 			} break;
 			case (GT SHIFT24):{
 				loadBip();
 				if (bigCmp() > 0){
-					bigFromInt(TRUE);
+					pushBooleanRef(TRUE);
 				} else {
-					bigFromInt(FALSE);
+					pushBooleanRef(FALSE);
 				}
-				pushRef(bip.res);
 			} break;
 			case (GE SHIFT24):{
 				loadBip();
 				if (bigCmp() >= 0){
-					bigFromInt(TRUE);
+					pushBooleanRef(TRUE);
 				} else {
-					bigFromInt(FALSE);
+					pushBooleanRef(FALSE);
 				}
-				pushRef(bip.res);
 			} break;
 			case (JMP SHIFT24): state = IMMEDIATE_CURRENT -1; break;
 			case (BRF SHIFT24): if(*(boolean *)popRef()->data IS_FAlSE) state = IMMEDIATE_CURRENT -1; break;
@@ -489,8 +493,18 @@ void executeLine(int i){
                 pushNil();
                 break;
 			case (REFEQ SHIFT24):
+				p1 = (boolean *)popRef() -> data;
+				p2 = (boolean *)popRef() -> data;
+				if(p1 == p2){
+					pushBooleanRef(TRUE);
+				} else pushBooleanRef(FALSE);
                 break;
 			case (REFNE SHIFT24):
+				p1 = (boolean *)popRef() -> data;
+				p2 = (boolean *)popRef() -> data;
+				if(p1 != p2){
+					pushBooleanRef(TRUE);
+				} else pushBooleanRef(FALSE);
                 break;
 
 		}
@@ -560,14 +574,15 @@ void debug(int argn, unsigned int program[], int globaln){
 				else printf("sp");
 				printf("\t--->\t%03d:\tXXXX\n",sp);
 				for(i = sp-1; i >= 0; i--){
-					if(i == fp) printf("fp\t--->");
-					else printf("\t");
+					if(i == fp) {printf("fp\t--->");}
+					else {printf("\t");}
 					printf("\t%03d:\t",i);
 					if(stack[i].isObjRef){
 						if(IS_NULL(stack[i].u.objRef)) printf("Ref : NULL\n"); 
-						else printf("Ref: %p\n", (void*)&stack[i]);
-					}
-					else {
+					    else {
+							printf("Ref: %p\n", (void*)&stack[i]);
+						}
+					} else {
 						printf("Int: %d\n",stack[i].u.number);
 					}
 				}
@@ -575,11 +590,8 @@ void debug(int argn, unsigned int program[], int globaln){
 			} else if(strcmp(input,"data") == 0|| strcmp(input,"d") == 0) {
 				for(i = 0; i < globaln; i++){
 					printf("data[%04d]:\t", i);
-					if(!IS_NULL(global[i].u.objRef)){
-					bip.op1 = global[i].u.objRef;
-					bigPrint(stdout);
-					} else printf("NULL");
-					printf("\n");
+					if(IS_NULL(return_register[i].u.objRef)) printf("Ref : NULL\n"); 
+					else printf("Ref: %p\n", (void*)&return_register[i]);
 				}
 				printf("\t --- bottom of data ---\n");
 			} else if(strcmp(input,"register") == 0|| strcmp(input,"r") == 0) {
@@ -588,7 +600,7 @@ void debug(int argn, unsigned int program[], int globaln){
 					if(!IS_NULL(return_register[i].u.objRef)){
 					bip.op1 = return_register[i].u.objRef;
 					bigPrint(stdout);
-					} else printf("NULL");
+					} else {printf("NULL");}
 					printf("\n");
 				}
 				printf("\t --- bottom of register ---\n");
@@ -610,7 +622,7 @@ void debug(int argn, unsigned int program[], int globaln){
 							else printf("%p\n",(void*)&OBJ_REF(i));	
 						}
 					}
-				}
+				} else error("input error");
 			}
 		} else if(strcmp(input,"breakpoint") == 0|| strcmp(input,"b") == 0){
 			printf("DEBUG [breakpoint]: ");
