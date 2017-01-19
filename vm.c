@@ -159,6 +159,16 @@ void printLine(int index, int n){
 			case (PUSHR SHIFT24): printf("pushr\n"); break;
 			case (POPR SHIFT24): printf("popr\n"); break;
 			case (DUP SHIFT24): printf("dup\n"); break;
+			case (NEW SHIFT24): printf("new\t%d\n", IMMEDIATE(program_memory[index])); break;
+			case (GETF SHIFT24): printf("getf\t%d\n", IMMEDIATE(program_memory[index])); break;
+			case (PUTF SHIFT24): printf("putf\t%d\n", IMMEDIATE(program_memory[index])); break;
+			case (NEWA SHIFT24): printf("newa\n"); break;
+			case (GETFA SHIFT24): printf("getfa\n"); break;
+			case (PUTFA SHIFT24): printf("putfa\n"); break;
+			case (GETSZ SHIFT24): printf("getsz\n"); break;
+			case (PUSHN SHIFT24): printf("pushn\n"); break;
+			case (REFEQ SHIFT24): printf("refeq\n"); break;
+			case (REFNE SHIFT24): printf("refne\n"); break;
 		}
 }
 
@@ -412,6 +422,27 @@ void executeLine(int i){
 					pushInt(x);
 				}
 				break;
+			case (NEW SHIFT24):
+				break;
+			case (GETF SHIFT24):
+                break;
+			case (PUTF SHIFT24):
+                break;
+			case (NEWA SHIFT24):
+                break;
+			case (GETFA SHIFT24):
+                break;
+			case (PUTFA SHIFT24):
+                break;
+			case (GETSZ SHIFT24):
+                break;
+			case (PUSHN SHIFT24):
+                break;
+			case (REFEQ SHIFT24):
+                break;
+			case (REFNE SHIFT24):
+                break;
+
 		}
 }
 
