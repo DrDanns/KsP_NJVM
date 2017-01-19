@@ -85,6 +85,17 @@ ObjRef newPrimObject(int dataSize) {
   return objRef;
 }
 
+ObjRef getIndexedObjRef(ObjRef origin, int index){
+	int i;
+	ObjRef res;
+	if(index >= GET_SIZE(origin)) error("Array out of bounds");
+	res = (ObjRef)GET_REFS(origin);
+	for(i = 0; i < index; i++){
+		res = res + res -> size;
+	}
+	return res;
+}
+
 typedef unsigned int boolean;
 
 
@@ -262,7 +273,7 @@ void executeLine(int i){
 	int x;
 	char c;
 	StackSlot stackslot;
-	ObjRef objRef;
+	ObjRef objRef,objRefVal;
 	switch(program_memory[i] & 0xFF000000){
 			case (PUSHC SHIFT24): 
 				bigFromInt(IMMEDIATE_CURRENT);
@@ -431,16 +442,13 @@ void executeLine(int i){
 
 				break;
 			case (GETF SHIFT24):
-				stack[fp] = stack[fp].IMMEDIATE_CURRENT;
+				objRef = popRef();
+				pushRef(getIndexedObjRef(objRef,IMMEDIATE_CURRENT));
                 break;
 			case (PUTF SHIFT24):
-                if(fp!=0) {
-                    fp--;
-                    if (stack[sp].isObjRef IS_FAlSE) {
-                        stack[fp].IMMEDIATE_CURRENT = stack[fp+1].IMMEDIATE_CURRENT;
-                    }
-                    fp--;
-                }
+                objRefVal = popRef();
+				objRef = popRef();
+				*(ObjRef *)getIndexedObjRef(objRef,IMMEDIATE_CURRENT) -> data = objRefVal;
 				break;
 			case (NEWA SHIFT24):
                 break;
