@@ -637,7 +637,10 @@ void debug(int argn, unsigned int program[], int globaln){
 					objRef = stackslot.u.objRef;
 					if(IS_PRIM(objRef)){
 						printf("value : ");
-						printBig(stackslot.u.objRef);
+                        bip.op1 = objRef;
+                        int b = bigToInt();
+                        printf("%d", b);
+						/*printBig(stackslot.u.objRef); */
 						printf("\n");
 					} else {
 						printf("Contained objects: %d\n",GET_SIZE(objRef));
