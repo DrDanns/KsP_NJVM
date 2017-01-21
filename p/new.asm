@@ -1,7 +1,13 @@
-new	3
+asf 1
+new		3
+popl	-1
+drop	1
+pushl	-1
 pushc	7
+putf	0
+pushl	-1
 pushc   8
-eq
-pushc	5
-pushc	6
-lt
+putf	1
+pushl	-1
+pushc	9
+putf	2

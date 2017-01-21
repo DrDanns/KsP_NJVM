@@ -234,7 +234,7 @@ void pushRef(ObjRef element){
 }
 
 void pushRefIndex(ObjRef element, int index){
-	if(index < STACK_SIZE){
+	if(index < sp){
 		stack[index] = *newRefStackSlot(element);
 	} else {
 		error("Stack Overflow");
@@ -280,7 +280,7 @@ ObjRef popRef(void){
 }
 
 ObjRef popRefIndex(int index){
-	if(index!=0){
+	if(index>=0 && index < sp){
 		if (stack[index].isObjRef IS_TRUE){
 			return stack[index].u.objRef;
 		}
@@ -485,7 +485,7 @@ void executeLine(int i){
 			case (PUTF SHIFT24):
                 objRefVal = popRef();
 				objRef = popRef();
-				OBJ_REF(IMMEDIATE_CURRENT) -> data = objRefVal;
+				OBJ_REF(IMMEDIATE_CURRENT) = objRefVal;
 				break;
 			case (NEWA SHIFT24):
 				objRefVal = popRef();
@@ -510,7 +510,8 @@ void executeLine(int i){
                 break;
 			case (GETSZ SHIFT24):
 				objRef = popRef();
-				x = GET_SIZE(objRef);
+				if (IS_PRIM(objRef)) x = -1;
+				else x = GET_SIZE(objRef);
 				bigFromInt(x);
 				pushRef(bip.res);
                 break;
@@ -603,7 +604,7 @@ void debug(int argn, unsigned int program[], int globaln){
 					else {printf("\t");}
 					printf("\t%03d:\t",i);
 					if(stack[i].isObjRef){
-						if(IS_NULL(stack[i].u.objRef)) printf("Ref : NULL\n"); 
+						if(IS_NULL(stack[i].u.objRef)) printf("Ref: NULL\n"); 
 					    else {
 							printf("Ref: %p\t", (void*)&stack[i]);
 							printf(IS_PRIM(stack[i].u.objRef) ? "Primitive\n" : "Record/Array\n"); 
@@ -637,10 +638,7 @@ void debug(int argn, unsigned int program[], int globaln){
 					objRef = stackslot.u.objRef;
 					if(IS_PRIM(objRef)){
 						printf("value : ");
-                        bip.op1 = objRef;
-                        int b = bigToInt();
-                        printf("%d", b);
-						/*printBig(stackslot.u.objRef); */
+                        printBig(objRef);
 						printf("\n");
 					} else {
 						printf("Contained objects: %d\n",GET_SIZE(objRef));
