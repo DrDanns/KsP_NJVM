@@ -367,8 +367,7 @@ void executeLine(int i){
 				pushRef(objRef);
 				break;
 			case (WRINT SHIFT24):
-				bip.op1 = popRef();
-				/*bigPrint(stdout);*/
+				printBig(popRef());
 				break;
 			case (RDCHR SHIFT24): 
 				scanf("%s", &c); 
@@ -521,7 +520,7 @@ void executeLine(int i){
 				objRef = popRef();
 				bip.op1 = objRefIndex;
 				x = bigToInt();
-				OBJ_REF(x) -> data = objRefVal;
+				setObjRef(objRef,objRefVal,x);
                 break;
 			case (GETSZ SHIFT24):
 				objRef = popRef();
@@ -640,8 +639,7 @@ void debug(int argn, unsigned int program[], int globaln){
 				for(i = 0; i < REGISTER_SIZE; i++){
 					printf("register[%02d]:\t", i);
 					if(!IS_NULL(return_register[i].u.objRef)){
-					bip.op1 = return_register[i].u.objRef;
-					/*bigPrint(stdout);*/
+					printBig(return_register[i].u.objRef);
 					} else {printf("NULL");}
 					printf("\n");
 				}
