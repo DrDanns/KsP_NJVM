@@ -1,0 +1,62 @@
+type Node = record {
+  Character sign;
+  Node left;
+  Node right;
+};
+
+Node newLeafNode(Character p) {
+  local Node result;
+  result = new(Node);
+  result.sign = p;
+  result.left = nil;
+  result.right = nil;
+  return result;
+}
+
+Node newInnerNode(Character p, Node l, Node r) {
+  local Node result;
+  result = new(Node);
+  result.sign = p;
+  result.left = l;
+  result.right = r;
+  return result;
+}
+
+void Tree(Node m) {
+
+  if(m.left == nil && m.right == nil) {
+    writeString("newLeafNode(\"");
+    writeCharacter(m.sign);
+    writeString("\")");
+  } else {
+    writeString("newInnerNode(\"");
+    writeCharacter(m.sign);
+    writeString("\", ");
+    Tree(m.left);
+    writeString(", ");
+    Tree(m.right);
+    writeString(")\n");
+  }
+}
+
+
+
+void main() {
+local Node re;
+    re = newInnerNode(
+      '-',
+      newLeafNode('5'),
+      newInnerNode(
+        '*',
+        newInnerNode(
+          '+',
+          newLeafNode('1'),
+          newLeafNode('3')),
+        newInnerNode(
+          '-',
+          newLeafNode('4'),
+          newLeafNode('7'))));
+
+          Tree(re);
+
+}
