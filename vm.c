@@ -83,7 +83,7 @@ ObjRef getIndexedObjRef(ObjRef origin, int index){
     int i;
     ObjRef *res;
 	if(IS_PRIM(origin)) error("Origin is primitive not a record");
-    if(index >= GET_SIZE(origin)) error("Array out of bounds");
+    if(index >= GET_SIZE(origin)) error("Element out of bounds");
     res = GET_REFS(origin);
     for(i = 0; i < index; i++){
         res++;
@@ -95,7 +95,7 @@ void setObjRef(ObjRef origin, ObjRef insert, int index){
 	int i;
     ObjRef *res;
 	if(IS_PRIM(origin)) error("Origin is primitive not a record");
-    if(index >= GET_SIZE(origin)) error("Array out of bounds");
+    if(index >= GET_SIZE(origin)) error("Element out of bounds");
     res = GET_REFS(origin);
     for(i = 0; i < index; i++){
         res++;
@@ -493,11 +493,17 @@ void executeLine(int i){
 				break;
 			case (GETF SHIFT24):
 				objRef = popRef();
+                if(IS_NULL(objRef)) {
+                    error("nil-Referenz on objRef");
+                }
 				pushRef(getIndexedObjRef(objRef,IMMEDIATE_CURRENT));
                 break;
 			case (PUTF SHIFT24):
                 objRefVal = popRef();
 				objRef = popRef();
+                if(IS_NULL(objRef)) {
+                    error("nil-Referenz on objRef");
+                }
 				setObjRef(objRef,objRefVal,IMMEDIATE_CURRENT);
 				break;
 			case (NEWA SHIFT24):
@@ -510,6 +516,9 @@ void executeLine(int i){
 			case (GETFA SHIFT24):
 				objRefIndex = popRef();
 				objRef = popRef();
+                if(IS_NULL(objRef)) {
+                    error("nil-Referenz on objRef");
+                }
 				bip.op1 = objRefIndex;
 				x = bigToInt();
 				pushRef(getIndexedObjRef(objRef,x));
@@ -520,6 +529,9 @@ void executeLine(int i){
 				objRef = popRef();
 				bip.op1 = objRefIndex;
 				x = bigToInt();
+                if(IS_NULL(objRef)) {
+                    error("nil-Referenz on objRef");
+                }
 				setObjRef(objRef,objRefVal,x);
                 break;
 			case (GETSZ SHIFT24):
