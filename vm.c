@@ -609,9 +609,15 @@ void outputObjectTree(ObjRef objRef, int depth){
 		printf("Comp: %p\telements: %d\n", (void*)&objRef, GET_SIZE(objRef));
 		for(y = 0; y < GET_SIZE(objRef); y++){
 			objRefIndex = getIndexedObjRef(objRef,y);
-			printTab(2+depth);
-			printf("%03d: ",y);
-			outputObjectTree(objRefIndex,depth+1);
+			if(IS_NULL(objRefIndex)) {
+				printTab(2+depth);
+				printf("%03d: ",y);
+				printf("Ref : NULL\n");
+			} else {
+				printTab(2+depth);
+				printf("%03d: ",y);
+				outputObjectTree(objRefIndex,depth+1);
+			}
 		}
 	}
 
