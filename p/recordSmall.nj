@@ -3,6 +3,11 @@ type Point = record {
   Integer y;
 };
 
+type Line = record {
+  Point x;
+  Point y;
+};
+
 void move(Point p, Point delta) {
   p.x = p.x + delta.x;
   p.y = p.y + delta.y;
