@@ -85,11 +85,11 @@ ObjRef getIndexedObjRef(ObjRef origin, int index){
     ObjRef *res;
 	if(IS_PRIM(origin)) error("Origin is primitive not a record");
     if(index >= GET_SIZE(origin)) error("Array out of bounds");
-    res = (ObjRef *)GET_REFS(origin);
+    res = GET_REFS(origin);
     for(i = 0; i < index; i++){
-        res = res + ((ObjRef)res) -> size;
+        res++;
     }
-    return (ObjRef)res;
+    return *res;
 }
 
 ObjRef newPrimObject(int dataSize) {
@@ -106,6 +106,7 @@ ObjRef newPrimObject(int dataSize) {
 ObjRef newRecordObject(int number) {
     int dataSize;
     ObjRef objRef;
+	ObjRef *innerRef;
     int i;
     dataSize = sizeof(unsigned int) + (number * sizeof(ObjRef));
 
@@ -115,8 +116,10 @@ ObjRef newRecordObject(int number) {
         fatalError("newRecordObject() got no memory");
     }
     objRef->size = number | MSB;
+	innerRef = GET_REFS(objRef);
     for(i = 0; i < number; i++) {
-		OBJ_REF(i) = NULL;
+		*innerRef = NULL;
+		innerRef++;
     }
 
     return objRef;
