@@ -506,13 +506,14 @@ void executeLine(int i){
 				bip.op1 = objRefVal;
 				x = bigToInt();
 				objRef = newRecordObject(x);
+				pushRef(objRef);
                 break;
 			case (GETFA SHIFT24):
 				objRefIndex = popRef();
 				objRef = popRef();
 				bip.op1 = objRefIndex;
 				x = bigToInt();
-				pushRef(OBJ_REF(x));
+				pushRef(getIndexedObjRef(objRef,x));
                 break;
 			case (PUTFA SHIFT24):
 				objRefVal = popRef();
