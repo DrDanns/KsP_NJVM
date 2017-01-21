@@ -59,11 +59,10 @@
 #define IS_PRIM(objRef) ((( objRef)->size & MSB) == 0)
 #define GET_SIZE(objRef) ((objRef)->size & ~MSB)
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
-#define OBJ_REF(i) *(ObjRef *)getIndexedObjRef(objRef,i)
 #define IS_NULL(objRef) ((void*)objRef == NULL)
 
 #define STACK_SIZE 1000
-#define MEMORY_SIZE 300
+#define MEMORY_SIZE 1000
 #define REGISTER_SIZE 10
 
 void error(char msg[]){
