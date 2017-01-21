@@ -92,6 +92,18 @@ ObjRef getIndexedObjRef(ObjRef origin, int index){
     return *res;
 }
 
+void setObjRef(ObjRef origin, ObjRef insert, int index){
+	int i;
+    ObjRef *res;
+	if(IS_PRIM(origin)) error("Origin is primitive not a record");
+    if(index >= GET_SIZE(origin)) error("Array out of bounds");
+    res = GET_REFS(origin);
+    for(i = 0; i < index; i++){
+        res++;
+    }
+	*res = insert;
+}
+
 ObjRef newPrimObject(int dataSize) {
   ObjRef objRef;
   objRef = malloc(sizeof(unsigned int) +
@@ -488,7 +500,7 @@ void executeLine(int i){
 			case (PUTF SHIFT24):
                 objRefVal = popRef();
 				objRef = popRef();
-				OBJ_REF(IMMEDIATE_CURRENT) = objRefVal;
+				setObjRef(objRef,objRefVal,IMMEDIATE_CURRENT);
 				break;
 			case (NEWA SHIFT24):
 				objRefVal = popRef();
@@ -576,7 +588,7 @@ void debug(int argn, unsigned int program[], int globaln){
 	
 	void *pointer;
 	StackSlot stackslot;
-	ObjRef objRef;
+	ObjRef objRef, objRefIndex;
 	
 	if(argn < MEMORY_SIZE){
 		for(i = 0; i < argn; i++){
@@ -647,19 +659,19 @@ void debug(int argn, unsigned int program[], int globaln){
 						printf("Contained objects: %d\n",GET_SIZE(objRef));
 						for(i = 0; i < GET_SIZE(objRef); i++){
 							printf("\t%03d\tRef: ",i);	
-							if (IS_NULL(OBJ_REF(i))) printf("NULL\n");
-							else if(IS_PRIM(getIndexedObjRef(objRef,i))){
-								bip.op1 = getIndexedObjRef(objRef,i);
-                                printf("%p\t", (void *)&bip.op1->data);
-                                printf("Primitive\n");
-							} else {
-                                bip.op1 = getIndexedObjRef(objRef,i);
-                                printf("%p\t", (void *)&bip.op1->data);
-                                printf("Record/Array\n");
-                            }
+							objRefIndex = getIndexedObjRef(objRef,i);
+							if (IS_NULL(objRefIndex)) printf("NULL\n");
+							else {
+								printf("%p\t", (void *)objRefIndex);
+								if(IS_PRIM(getIndexedObjRef(objRef,i))){
+									printf("Primitive\n");
+								} else {
+									printf("Record/Array\n");
+								}
+							}
 						}
 					}
-				} else error("input error");
+				}
 			}
 		} else if(strcmp(input,"breakpoint") == 0|| strcmp(input,"b") == 0){
 			printf("DEBUG [breakpoint]: ");
