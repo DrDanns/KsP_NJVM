@@ -103,32 +103,32 @@ void setObjRef(ObjRef origin, ObjRef insert, int index){
 	*res = insert;
 }
 
-ObjRef newPrimObject(int dataSize) {
+ObjRef newPrimObject(int numBytes) {
   ObjRef objRef;
   objRef = malloc(sizeof(unsigned int) +
-                  dataSize * sizeof(unsigned char));
+                  numBytes * sizeof(unsigned char));
   if (objRef == NULL) {
     fatalError("newPrimObject() got no memory");
   }
-  objRef->size = dataSize;
+  objRef->size = numBytes;
   return objRef;
 }
 
-ObjRef newRecordObject(int number) {
+ObjRef newCompoundObject(int numObjRefs) {
     int dataSize;
     ObjRef objRef;
 	ObjRef *innerRef;
     int i;
-    dataSize = sizeof(unsigned int) + (number * sizeof(ObjRef));
+    dataSize = sizeof(unsigned int) + (numObjRefs * sizeof(ObjRef));
 
     objRef = malloc(dataSize);
 
     if (objRef == NULL) {
-        fatalError("newRecordObject() got no memory");
+        fatalError("newCompoundObject() got no memory");
     }
-    objRef->size = number | MSB;
+    objRef->size = numObjRefs | MSB;
 	innerRef = GET_REFS(objRef);
-    for(i = 0; i < number; i++) {
+    for(i = 0; i < numObjRefs; i++) {
 		*innerRef = NULL;
 		innerRef++;
     }
@@ -488,7 +488,7 @@ void executeLine(int i){
 				}
 				break;
 			case (NEW SHIFT24):
-                objRef = newRecordObject(IMMEDIATE_CURRENT);
+                objRef = newCompoundObject(IMMEDIATE_CURRENT);
 				pushRef(objRef);
 				break;
 			case (GETF SHIFT24):
@@ -510,7 +510,7 @@ void executeLine(int i){
 				objRefVal = popRef();
 				bip.op1 = objRefVal;
 				x = bigToInt();
-				objRef = newRecordObject(x);
+				objRef = newCompoundObject(x);
 				pushRef(objRef);
                 break;
 			case (GETFA SHIFT24):
@@ -588,6 +588,35 @@ void execute(int argn, unsigned int program[]){
 	
 }
 
+void printTab(int x){
+	int i;
+	for(i = 0; i < x; i++){
+		printf("\t");
+	}
+}
+
+void outputObjectTree(ObjRef objRef, int depth){
+	int y;
+	ObjRef objRefIndex;
+	
+	if(IS_NULL(objRef)) printf("Ref : NULL\n");
+	
+	if(IS_PRIM(objRef)){
+		printf("Prim: value: ");
+		printBig(objRef);
+		printf("\n");
+	} else {
+		printf("Comp: %p\telements: %d\n", (void*)&objRef, GET_SIZE(objRef));
+		for(y = 0; y < GET_SIZE(objRef); y++){
+			objRefIndex = getIndexedObjRef(objRef,y);
+			printTab(2+depth);
+			printf("%03d: ",y);
+			outputObjectTree(objRefIndex,depth+1);
+		}
+	}
+
+}
+
 void debug(int argn, unsigned int program[], int globaln){
 	
 	int i;
@@ -619,7 +648,7 @@ void debug(int argn, unsigned int program[], int globaln){
 		} else if(strcmp(input,"quit") == 0|| strcmp(input,"q") == 0){
 			exit(0);
 		} else if(strcmp(input,"inspect") == 0|| strcmp(input,"i") == 0){
-			printf("DEBUG [inspect]: stack, data, register, object?\n");
+			printf("DEBUG [inspect]: stack, data, register, object, tree?\n");
 			scanf("%s", &input[0]);
 			if(strcmp(input,"stack") == 0|| strcmp(input,"s") == 0){
 				if(sp == fp) printf("sp, fp");
@@ -639,7 +668,7 @@ void debug(int argn, unsigned int program[], int globaln){
 						printf("Int: %d\n",stack[i].u.number);
 					}
 				}
-			printf("\t\t --- bottom of stack ---\n");
+				printf("\t\t --- bottom of stack ---\n");
 			} else if(strcmp(input,"data") == 0|| strcmp(input,"d") == 0) {
 				for(i = 0; i < globaln; i++){
 					printf("data[%04d]:\t", i);
@@ -661,27 +690,38 @@ void debug(int argn, unsigned int program[], int globaln){
 				if(scanf("%p", &pointer) IS_TRUE){
 					stackslot = *(StackSlot *) pointer;
 					objRef = stackslot.u.objRef;
-					if(IS_PRIM(objRef)){
-						printf("value : ");
-                        printBig(objRef);
-						printf("\n");
-					} else {
-						printf("Contained objects: %d\n",GET_SIZE(objRef));
-						for(i = 0; i < GET_SIZE(objRef); i++){
-							printf("\t%03d\tRef: ",i);	
-							objRefIndex = getIndexedObjRef(objRef,i);
-							if (IS_NULL(objRefIndex)) printf("NULL\n");
-							else {
-								printf("%p\t", (void *)objRefIndex);
-								if(IS_PRIM(getIndexedObjRef(objRef,i))){
-									printf("Primitive\n");
-								} else {
-									printf("Record/Array\n");
-								}
-							}
+					if(IS_PRIM(objRef)){ 
+						printf("value : "); 
+                        printBig(objRef); 
+						printf("\n"); 
+					} else { 
+						printf("Contained objects: %d\n",GET_SIZE(objRef)); 
+						for(i = 0; i < GET_SIZE(objRef); i++){ 
+							printf("\t%03d\tRef: ",i);   
+							objRefIndex = getIndexedObjRef(objRef,i); 
+							if (IS_NULL(objRefIndex)) printf("NULL\n"); 
+							else { 
+								printf("%p\t", (void *)objRefIndex); 
+								if(IS_PRIM(getIndexedObjRef(objRef,i))){ 
+									printf("Primitive\n"); 
+								} else { 
+									printf("Record/Array\n"); 
+								} 	
+							} 
 						}
 					}
+				}					
+			} else if(strcmp(input,"tree") == 0|| strcmp(input,"t") == 0) {
+				printf("Showing stack as a tree:\n");
+				for(i = sp-1; i >= 0; i--){
+					printf("\t%03d: ",i);
+					if(!stack[i].isObjRef){
+						printf("Int: %d\n",stack[i].u.number);
+					} else {
+						outputObjectTree(stack[i].u.objRef,0);
+					}
 				}
+				printf("\t\t --- bottom of stack ---\n");
 			}
 		} else if(strcmp(input,"breakpoint") == 0|| strcmp(input,"b") == 0){
 			printf("DEBUG [breakpoint]: ");
