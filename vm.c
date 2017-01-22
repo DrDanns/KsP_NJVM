@@ -56,6 +56,8 @@
 #define SIGN_EXTEND(i) ((i) & 0x00800000 ? (i) | 0xFF000000 : ((i) & 0x00FFFFF))
 
 #define MSB (1 << (8 * sizeof(unsigned int) - 1))
+#define BROKEN_HEART_FL (1 << (8 * sizeof(unsigned int) - 2))
+#define IS_BROKEN(objRef) ((( objRef)->size & BROKEN_HEART_FL) == 0)
 #define IS_PRIM(objRef) ((( objRef)->size & MSB) == 0)
 #define GET_SIZE(objRef) ((objRef)->size & ~MSB)
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
@@ -154,7 +156,7 @@ typedef struct {
 
 StackSlot *newIntStackSlot(int value){
 	StackSlot *result;
-	result = myMalloc(sizeof(StackSlot));
+	result = malloc(sizeof(StackSlot));
 	if (result == NULL) {
 		error("no memory");
 	}
@@ -165,7 +167,7 @@ StackSlot *newIntStackSlot(int value){
 
 StackSlot *newRefStackSlot(ObjRef objRef){
 	StackSlot *result;
-	result = myMalloc(sizeof(StackSlot));
+	result = malloc(sizeof(StackSlot));
 	result -> isObjRef = TRUE;
 	result -> u.objRef = objRef;
 	if (result == NULL) {
@@ -189,6 +191,81 @@ int rp = 0;
 int state = 0;
 static size_t next_index = 0;
 
+char *currentHeap;
+char *sourceHeap;
+void * myMalloc(size_t sz);
+int collectGarbage(void);
+ObjRef relocate(ObjRef orig);
+void * copyObjectToFreeMem(ObjRef orig);
+
+int collectGarbage() {
+	int i;
+	char * temp;
+
+	/* swap heaps */
+	temp = currentHeap;
+	currentHeap = sourceHeap;
+	sourceHeap = temp;
+
+	for(i = 0; i <= sp; i++) {
+		if(stack[i].isObjRef) {
+			/* COPY ROOT OBJECTS */
+		}
+	}
+	for(i = 0; i <= rp; i++) {
+		if(return_register[i].isObjRef) {
+			/* COPY ROOT OBJECTS */
+		}
+	}
+	for(i = 0; i <= 5; i++) {
+		if(global[i].isObjRef) {
+			/* COPY ROOT OBJECTS */
+		}
+	}
+
+	/* scan phase */
+
+	/*
+	 * return 0 wenn alles ok,
+	 * das kann dann gecheckt werden wo sie aufgerufen wurde
+	 * und ggf. beendet dann die VM
+	 * */
+	return 0;
+}
+
+void * copyObjectToFreeMem(ObjRef orig) {
+
+	void * pointer;
+
+	pointer = myMalloc(orig->size);
+	((ObjRef)pointer)->size = orig->size;
+	/* HIER MUSS NOCH WAS ANDERES HIN */
+	strcpy(((ObjRef)pointer)->data , orig->data);
+
+	return pointer;
+}
+
+ObjRef relocate(ObjRef orig) {
+	ObjRef copy;
+	if(orig == NULL) {
+		/* relocate(nil) = nil */
+		copy = NULL;
+	}
+	else if(IS_BROKEN(orig)) {
+		/* Objekt ist bereits kopiert, Forward-Pointer gesetzt */
+
+		/* ?????????? copy = orig->forwardPointer; */
+	}
+	else {
+		/* Objekt muss noch kopiert werden */
+		copy = copyObjectToFreeMem(orig);
+		/* im Original: setze Broken-Heart-Flag und Forward-Pointer */
+		orig->size = orig->size | BROKEN_HEART_FL;
+		/* ?????????? orig->forwardPointer = copy; */
+	}
+	/* Adresse des kopierten Objektes zurück */
+	return copy;
+}
 
 void * myMalloc(size_t sz) {
 
@@ -198,7 +275,7 @@ void * myMalloc(size_t sz) {
         return NULL;
     }
 
-    pointer = &heapA1[next_index];
+    pointer = &currentHeap[next_index];
     next_index += sz;
     if(next_index >= heapsize/2) {
         error("HEAP FULL, garbage collector!");
@@ -223,6 +300,8 @@ void setHeapsize(int size){
 		heapA2 = heapA1 + 1;
 		heapB1 = malloc(heapsize/2);
 		heapB2 = heapB1 + 1;
+		currentHeap = heapA1;
+        sourceHeap = heapB1;
 	}
 }
 
