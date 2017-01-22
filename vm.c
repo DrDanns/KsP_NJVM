@@ -178,7 +178,8 @@ int stacksize;
 int heapsize;
 StackSlot *global;
 StackSlot *stack;
-char *heap1, *heap2;
+char *heapA1, *heapA2;
+char *heapB1, *heapB2;
 unsigned int program_memory[MEMORY_SIZE];
 StackSlot return_register[REGISTER_SIZE];
 int sp = 0;
@@ -200,8 +201,10 @@ void setHeapsize(int size){
 	if(heapsize > MAX_HEAP_SIZE || heapsize <= 0) error("invalid heapsize");
 	else {
 		printf("heapsize: %d kb\n", size);
-		heap1 = malloc(heapsize/2);
-		heap2 = malloc(heapsize/2);
+		heapA1 = malloc(heapsize/2);
+		heapA2 = heapA1 + 1;
+		heapB1 = malloc(heapsize/2);
+		heapB2 = heapB1 + 1;
 	}
 }
 
