@@ -1,11 +1,6 @@
 #include <bigint.h>
 #include "vm.c"
 
-#define IMMEDIATE(x) ((x) & 0x00FFFFFF)
-
-#define TEXT_LENGTH 80
-#define INSTRUCTION_SIZE 30
-
 #define VERSION 8
 
 int i;

@@ -61,12 +61,12 @@
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
 #define IS_NULL(objRef) ((void*)objRef == NULL)
 
-#define MAX_STACK_SIZE 524288
+#define MAX_STACK_SIZE 268435456
 #define STANDARD_STACK_SIZE 65536
 #define STACK_ELEMENTS (stacksize/sizeof(StackSlot))
-#define MAX_HEAP_SIZE 67108864
+#define MAX_HEAP_SIZE 1073741824
 #define STANDARD_HEAP_SIZE 8388608
-#define MEMORY_SIZE 1000
+#define MEMORY_SIZE 10000
 #define REGISTER_SIZE 10
 
 void * myMalloc(size_t sz);
@@ -200,8 +200,6 @@ void * myMalloc(size_t sz) {
 
     pointer = &heapA1[next_index];
     next_index += sz;
-	printf("next index %d\n",(int)next_index);
-
     if(next_index >= heapsize/2) {
         error("HEAP FULL, garbage collector!");
     }
@@ -365,8 +363,10 @@ void loadBipDiv(void){
 	ObjRef o1, o2;
 	o2 = popRef();
 	o1 = popRef();
+	bigFromInt(0);
 	bip.op1 = o2;
-	if(bigToInt() == 0) error("division by zero");
+	bip.op2 = bip.res;
+	if(bigCmp() == 0) error("division by zero");
 	bip.op1 = o1;
 	bip.op2 = o2;
 }
