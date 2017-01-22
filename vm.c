@@ -186,6 +186,26 @@ int sp = 0;
 int fp = 0;
 int rp = 0;
 int state = 0;
+static size_t next_index = 0;
+
+
+void * MyMalloc(size_t sz) {
+
+    void * pointer;
+
+    if(sz == 0 || sz > MAX_HEAP_SIZE) {
+        return NULL;
+    }
+
+    pointer = &heapA1[next_index];
+    next_index += sz;
+
+    if(next_index >= MAX_HEAP_SIZE) {
+        error("HEAP FULL, garbage collector!");
+    }
+
+    return pointer;
+}
 
 void setStacksize(int size){
 	stacksize = 1024 * size;
