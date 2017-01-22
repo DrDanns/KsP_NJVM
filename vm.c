@@ -69,7 +69,7 @@
 #define MEMORY_SIZE 1000
 #define REGISTER_SIZE 10
 
-void * MyMalloc(size_t sz);
+void * myMalloc(size_t sz);
 
 void error(char msg[]){
 	printf("Error: %s\n",msg);
@@ -111,7 +111,7 @@ void setObjRef(ObjRef origin, ObjRef insert, int index){
 
 ObjRef newPrimObject(int numBytes) {
   ObjRef objRef;
-  objRef = MyMalloc(sizeof(unsigned int) + numBytes * sizeof(unsigned char));
+  objRef = myMalloc(sizeof(unsigned int) + numBytes * sizeof(unsigned char));
   if (objRef == NULL) {
     fatalError("newPrimObject() got no memory");
   }
@@ -126,7 +126,7 @@ ObjRef newCompoundObject(int numObjRefs) {
     int i;
     dataSize = sizeof(unsigned int) + (numObjRefs * sizeof(ObjRef));
 
-    objRef = MyMalloc(dataSize);
+    objRef = myMalloc(dataSize);
 
     if (objRef == NULL) {
         fatalError("newCompoundObject() got no memory");
@@ -154,7 +154,7 @@ typedef struct {
 
 StackSlot *newIntStackSlot(int value){
 	StackSlot *result;
-	result = MyMalloc(sizeof(StackSlot));
+	result = myMalloc(sizeof(StackSlot));
 	if (result == NULL) {
 		error("no memory");
 	}
@@ -165,7 +165,7 @@ StackSlot *newIntStackSlot(int value){
 
 StackSlot *newRefStackSlot(ObjRef objRef){
 	StackSlot *result;
-	result = MyMalloc(sizeof(StackSlot));
+	result = myMalloc(sizeof(StackSlot));
 	result -> isObjRef = TRUE;
 	result -> u.objRef = objRef;
 	if (result == NULL) {
@@ -190,7 +190,7 @@ int state = 0;
 static size_t next_index = 0;
 
 
-void * MyMalloc(size_t sz) {
+void * myMalloc(size_t sz) {
 
     void * pointer;
 
@@ -201,7 +201,7 @@ void * MyMalloc(size_t sz) {
     pointer = &heapA1[next_index];
     next_index += sz;
 
-    if(next_index >= MAX_HEAP_SIZE) {
+    if(next_index >= MAX_HEAP_SIZE/2) {
         error("HEAP FULL, garbage collector!");
     }
 
@@ -305,7 +305,7 @@ void pushRefIndex(ObjRef element, int index){
 
 void pushBooleanRef(boolean b){
 	ObjRef objRef;
-	objRef = MyMalloc(sizeof(int) + sizeof(boolean));
+	objRef = myMalloc(sizeof(int) + sizeof(boolean));
 	objRef -> size = sizeof(boolean);
 	*(boolean *)objRef -> data = b;
 	pushRef(objRef);
