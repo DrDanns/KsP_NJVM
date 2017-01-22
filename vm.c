@@ -194,14 +194,15 @@ void * myMalloc(size_t sz) {
 
     void * pointer;
 
-    if(sz == 0 || sz > MAX_HEAP_SIZE) {
+    if(sz == 0 || sz > heapsize/2) {
         return NULL;
     }
 
     pointer = &heapA1[next_index];
     next_index += sz;
+	printf("next index %d\n",(int)next_index);
 
-    if(next_index >= MAX_HEAP_SIZE/2) {
+    if(next_index >= heapsize/2) {
         error("HEAP FULL, garbage collector!");
     }
 
