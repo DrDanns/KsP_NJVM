@@ -69,6 +69,8 @@
 #define MEMORY_SIZE 1000
 #define REGISTER_SIZE 10
 
+void * MyMalloc(size_t sz);
+
 void error(char msg[]){
 	printf("Error: %s\n",msg);
 	exit(1);
@@ -109,8 +111,7 @@ void setObjRef(ObjRef origin, ObjRef insert, int index){
 
 ObjRef newPrimObject(int numBytes) {
   ObjRef objRef;
-  objRef = malloc(sizeof(unsigned int) +
-                  numBytes * sizeof(unsigned char));
+  objRef = MyMalloc(sizeof(unsigned int) + numBytes * sizeof(unsigned char));
   if (objRef == NULL) {
     fatalError("newPrimObject() got no memory");
   }
@@ -125,7 +126,7 @@ ObjRef newCompoundObject(int numObjRefs) {
     int i;
     dataSize = sizeof(unsigned int) + (numObjRefs * sizeof(ObjRef));
 
-    objRef = malloc(dataSize);
+    objRef = MyMalloc(dataSize);
 
     if (objRef == NULL) {
         fatalError("newCompoundObject() got no memory");
@@ -153,7 +154,7 @@ typedef struct {
 
 StackSlot *newIntStackSlot(int value){
 	StackSlot *result;
-	result = malloc(sizeof(StackSlot));
+	result = MyMalloc(sizeof(StackSlot));
 	if (result == NULL) {
 		error("no memory");
 	}
@@ -164,7 +165,7 @@ StackSlot *newIntStackSlot(int value){
 
 StackSlot *newRefStackSlot(ObjRef objRef){
 	StackSlot *result;
-	result = malloc(sizeof(StackSlot));
+	result = MyMalloc(sizeof(StackSlot));
 	result -> isObjRef = TRUE;
 	result -> u.objRef = objRef;
 	if (result == NULL) {
@@ -304,7 +305,7 @@ void pushRefIndex(ObjRef element, int index){
 
 void pushBooleanRef(boolean b){
 	ObjRef objRef;
-	objRef = malloc(sizeof(int) + sizeof(boolean));
+	objRef = MyMalloc(sizeof(int) + sizeof(boolean));
 	objRef -> size = sizeof(boolean);
 	*(boolean *)objRef -> data = b;
 	pushRef(objRef);
