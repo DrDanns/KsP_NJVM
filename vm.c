@@ -191,7 +191,6 @@ void setStacksize(int size){
 	stacksize = 1024 * size;
 	if(stacksize > MAX_STACK_SIZE || stacksize <= 0) error("invalid stacksize");
 	else {
-		printf("stacksize: %d kb\n", size);
 		stack = malloc(stacksize);
 	}
 }
@@ -200,7 +199,6 @@ void setHeapsize(int size){
 	heapsize = 1024 * size;
 	if(heapsize > MAX_HEAP_SIZE || heapsize <= 0) error("invalid heapsize");
 	else {
-		printf("heapsize: %d kb\n", size);
 		heapA1 = malloc(heapsize/2);
 		heapA2 = heapA1 + 1;
 		heapB1 = malloc(heapsize/2);

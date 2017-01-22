@@ -38,9 +38,9 @@ int main(int argc, char *argv[]){
 		} else if (strcmp(argv[i],"--stack") == 0){
 			i++;
 			stacksize = strtol(argv[i], &rest, 10);
-			if(strcmp(rest,"") != 0) error("invalid input for stacksize");
+			if(strcmp(rest,"") != 0) error("illegal stack size");
 			if(stacksize <= 0){
-				error("invalid stacksize");
+				error("illegal stack size");
 			} else {
 				if(!manualStackSize) setStacksize(stacksize);
 				manualStackSize = TRUE;
@@ -48,9 +48,9 @@ int main(int argc, char *argv[]){
 		} else if (strcmp(argv[i],"--heap") == 0){
 			i++;
 			heapsize = strtol(argv[i], &rest, 10);
-			if(strcmp(rest,"") != 0) error("invalid input for heapsize");
+			if(strcmp(rest,"") != 0) error("illegal heap size");
 			if(heapsize <= 0){
-				error("invalid heapsize");
+				error("illegal heap size");
 			} else {
 				if(!manualHeapSize) setHeapsize(heapsize);
 				manualHeapSize = TRUE;
@@ -95,13 +95,15 @@ int main(int argc, char *argv[]){
 	
 	p = malloc(instructionSize * sizeof(int));
 	
-	if(!manualStackSize) setStacksize(16);
+	if(!manualStackSize) setStacksize(64);
 	if(!manualHeapSize) setHeapsize(8192);
 
 	fread (p, sizeof(int), instructionSize, file);
 	fclose(file);
 	
-	if(debug_active) printf("DEBUG: file '%s' loaded (code size = %d, data size = %d)\n",argv[argc-1],instructionSize,sdaVariables);
+	if(debug_active) {
+		printf("DEBUG:\tfile\t:\t'%s'\n\tcode\t:\t%d instructions\n\tdata\t:\t%d objects\n\tstack\t:\t%d slots\n\theap\t:\t2 * %d bytes\n",argv[argc-1],instructionSize,sdaVariables, stacksize/16 /*sizeof(StackSlot)*/ ,heapsize/2);
+	}
 	
 	printf("Ninja Virtual Machine started\n");
 	
