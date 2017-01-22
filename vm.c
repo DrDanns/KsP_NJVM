@@ -64,6 +64,8 @@
 #define MAX_STACK_SIZE 524288
 #define STANDARD_STACK_SIZE 65536
 #define STACK_ELEMENTS (stacksize/sizeof(StackSlot))
+#define MAX_HEAP_SIZE 67108864
+#define STANDARD_HEAP_SIZE 8388608
 #define MEMORY_SIZE 1000
 #define REGISTER_SIZE 10
 
@@ -173,8 +175,10 @@ StackSlot *newRefStackSlot(ObjRef objRef){
 }
 
 int stacksize;
+int heapsize;
 StackSlot *global;
 StackSlot *stack;
+char *heap1, *heap2;
 unsigned int program_memory[MEMORY_SIZE];
 StackSlot return_register[REGISTER_SIZE];
 int sp = 0;
@@ -188,6 +192,16 @@ void setStacksize(int size){
 	else {
 		printf("stacksize: %d kb\n", size);
 		stack = malloc(stacksize);
+	}
+}
+
+void setHeapsize(int size){
+	heapsize = 1024 * size;
+	if(heapsize > MAX_HEAP_SIZE || heapsize <= 0) error("invalid heapsize");
+	else {
+		printf("heapsize: %d kb\n", size);
+		heap1 = malloc(heapsize/2);
+		heap2 = malloc(heapsize/2);
 	}
 }
 

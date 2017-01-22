@@ -20,6 +20,7 @@ char option[2] = "--";
 
 int main(int argc, char *argv[]){
 	boolean manualStackSize = FALSE;
+	boolean manualHeapSize = FALSE;
 	for(i=1; i < argc; i++){
 		if(strcmp(argv[i],"--help") == 0){
 			printf("Usage: ./njvm [options] <code file>\nOptions:\n  --debug\t   start virtual machine in debug mode\n  --version\t   show version and exit\n  --help\t   show this help and exit\n");
@@ -43,6 +44,16 @@ int main(int argc, char *argv[]){
 			} else {
 				if(!manualStackSize) setStacksize(stacksize);
 				manualStackSize = TRUE;
+			}
+		} else if (strcmp(argv[i],"--heap") == 0){
+			i++;
+			heapsize = strtol(argv[i], &rest, 10);
+			if(strcmp(rest,"") != 0) error("invalid input for heapsize");
+			if(heapsize <= 0){
+				error("invalid heapsize");
+			} else {
+				if(!manualHeapSize) setHeapsize(heapsize);
+				manualHeapSize = TRUE;
 			}
 		} else if(strncmp(argv[i], "--", 2) == 0) {
 			printf("Error: unknown option '%s', try './njvm --help'\n",argv[i]);
@@ -85,6 +96,7 @@ int main(int argc, char *argv[]){
 	p = malloc(instructionSize * sizeof(int));
 	
 	if(!manualStackSize) setStacksize(16);
+	if(!manualHeapSize) setHeapsize(8192);
 
 	fread (p, sizeof(int), instructionSize, file);
 	fclose(file);
