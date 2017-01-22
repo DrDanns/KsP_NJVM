@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <string.h>
 #include <bigint.h>
 #include "vm.c"
 
@@ -12,6 +10,7 @@
 
 int i;
 int version, instructionSize, sdaVariables;
+char *rest;
 unsigned int *p;
 int header[3];
 char format[4]; 
@@ -20,7 +19,7 @@ int debug_active;
 char option[2] = "--";
 
 int main(int argc, char *argv[]){
-	
+	boolean manualStackSize = FALSE;
 	for(i=1; i < argc; i++){
 		if(strcmp(argv[i],"--help") == 0){
 			printf("Usage: ./njvm [options] <code file>\nOptions:\n  --debug\t   start virtual machine in debug mode\n  --version\t   show version and exit\n  --help\t   show this help and exit\n");
@@ -35,6 +34,16 @@ int main(int argc, char *argv[]){
 		} else if (strcmp(argv[i],"--version") == 0){
 			printf("Ninja Virtual Machine version %d (compiled %s, %s)\n",VERSION,__DATE__,__TIME__);
 			exit(0);
+		} else if (strcmp(argv[i],"--stack") == 0){
+			i++;
+			stacksize = strtol(argv[i], &rest, 10);
+			if(strcmp(rest,"") != 0) error("invalid input for stacksize");
+			if(stacksize <= 0){
+				error("invalid stacksize");
+			} else {
+				if(!manualStackSize) setStacksize(stacksize);
+				manualStackSize = TRUE;
+			}
 		} else if(strncmp(argv[i], "--", 2) == 0) {
 			printf("Error: unknown option '%s', try './njvm --help'\n",argv[i]);
 			exit(1);
@@ -42,7 +51,7 @@ int main(int argc, char *argv[]){
 
 	} 
 	
-
+	
 	file = fopen(argv[argc-1], "r");
 
 	if ( ( file ) == NULL ) {
@@ -74,7 +83,8 @@ int main(int argc, char *argv[]){
 	global = malloc(sdaVariables * sizeof(StackSlot));
 	
 	p = malloc(instructionSize * sizeof(int));
-
+	
+	if(!manualStackSize) setStacksize(16);
 
 	fread (p, sizeof(int), instructionSize, file);
 	fclose(file);

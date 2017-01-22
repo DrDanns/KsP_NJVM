@@ -61,7 +61,9 @@
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
 #define IS_NULL(objRef) ((void*)objRef == NULL)
 
-#define STACK_SIZE 1000
+#define MAX_STACK_SIZE 524288
+#define STANDARD_STACK_SIZE 65536
+#define STACK_ELEMENTS (stacksize/sizeof(StackSlot))
 #define MEMORY_SIZE 1000
 #define REGISTER_SIZE 10
 
@@ -170,14 +172,24 @@ StackSlot *newRefStackSlot(ObjRef objRef){
 	return result;
 }
 
+int stacksize;
 StackSlot *global;
-StackSlot stack[STACK_SIZE];
+StackSlot *stack;
 unsigned int program_memory[MEMORY_SIZE];
 StackSlot return_register[REGISTER_SIZE];
 int sp = 0;
 int fp = 0;
 int rp = 0;
 int state = 0;
+
+void setStacksize(int size){
+	stacksize = 1024 * size;
+	if(stacksize > MAX_STACK_SIZE || stacksize <= 0) error("invalid stacksize");
+	else {
+		printf("stacksize: %d kb\n", size);
+		stack = malloc(stacksize);
+	}
+}
 
 void printLine(int index, int n){
 	if(n==4) printf("%04d:\t",index);
@@ -229,7 +241,7 @@ void printLine(int index, int n){
 }
 
 void pushInt(int element){
-	if(sp < STACK_SIZE){
+	if(sp < STACK_ELEMENTS){
 		stack[sp] = *newIntStackSlot(element);
 		sp++;
 	} else {
@@ -239,7 +251,7 @@ void pushInt(int element){
 
 
 void pushRef(ObjRef element){
-	if(sp < STACK_SIZE){
+	if(sp < STACK_ELEMENTS){
 		stack[sp] = *newRefStackSlot(element);
 		sp++;
 	} else {
@@ -395,7 +407,7 @@ void executeLine(int i){
 				fp = popInt();
 			} break;
 			case (PUSHL SHIFT24): 
-				if ((fp + SIGN_EXTEND(program_memory[i])) < STACK_SIZE) {
+				if ((fp + SIGN_EXTEND(program_memory[i])) < STACK_ELEMENTS) {
 					objRef = popRefIndex(fp + SIGN_EXTEND(program_memory[i]));
 					pushRef(objRef);
 				} else{
@@ -635,7 +647,6 @@ void debug(int argn, unsigned int program[], int globaln){
 	void *pointer;
 	StackSlot stackslot;
 	ObjRef objRef, objRefIndex;
-	
 	if(argn < MEMORY_SIZE){
 		for(i = 0; i < argn; i++){
 			program_memory[i] = program[i];
