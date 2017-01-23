@@ -62,7 +62,7 @@
 #define GET_SIZE(objRef) ((objRef)->size & ~MSB)
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
 #define IS_NULL(objRef) ((void*)objRef == NULL)
-#define GET_FW_POINTER(objRef) ((ObjRef)(objRef -> size & 0x0FFFFFFF))
+#define GET_FW_POINTER(objRef) ((size_t)((objRef -> size) & 0x0FFFFFFF))
 
 #define MAX_STACK_SIZE 268435456
 #define STANDARD_STACK_SIZE 65536
@@ -273,13 +273,13 @@ ObjRef relocate(ObjRef orig) {
 	}
 	else if(IS_BROKEN(orig)) {
 		/* Objekt ist bereits kopiert, Forward-Pointer gesetzt */
-		copy = GET_FW_POINTER(orig);
+		copy = (ObjRef)&currentHeap[GET_FW_POINTER(orig)];
 	}
 	else {
 		/* Objekt muss noch kopiert werden */
 		copy = copyObjectToFreeMem(orig);
 		/* im Original: setze Broken-Heart-Flag und Forward-Pointer */
-		orig->size = *(int *)copy | BROKEN_HEART_FL;
+		orig->size = next_index | BROKEN_HEART_FL;
 	}
 	/* Adresse des kopierten Objektes zurück */
 	return copy;
