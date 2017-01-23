@@ -56,7 +56,7 @@
 #define SIGN_EXTEND(i) ((i) & 0x00800000 ? (i) | 0xFF000000 : ((i) & 0x00FFFFF))
 
 #define MSB (1 << (8 * sizeof(unsigned int) - 1))
-#define BROKEN_HEART_FL (1 << (8 * sizeof(unsigned int) - 2))
+#define BROKEN_HEART_FL (1 << (sizeof(unsigned int) - 2))
 #define IS_BROKEN(objRef) ((( objRef)->size & BROKEN_HEART_FL) == 0)
 #define IS_PRIM(objRef) ((( objRef)->size & MSB) == 0)
 #define GET_SIZE(objRef) ((objRef)->size & ~MSB)
@@ -70,7 +70,7 @@
 #define MAX_HEAP_SIZE 1073741824
 #define STANDARD_HEAP_SIZE 8388608
 #define MEMORY_SIZE 10000
-#define REGISTER_SIZE 10
+#define REGISTER_SIZE 100
 
 void * myMalloc(size_t sz);
 int sdaVariables;
@@ -307,7 +307,7 @@ void * myMalloc(size_t sz) {
 
     void * pointer;
 
-    if(sz == 0 || sz > heapsize/2) {
+    if(sz <= 0 || sz > heapsize/2) {
         return NULL;
     }
     if(t == 1) {
@@ -317,9 +317,13 @@ void * myMalloc(size_t sz) {
     next_index += sz;
     if(next_index >= heapsize/2) {
         if(collectGarbage() == 0) {
+			printf("\ngarbage collected!!\n");
             t = 0;
-			pointer = &currentHeap[next_index];
-			next_index += sz;
+			if(next_index >= heapsize/2) {
+				pointer = &currentHeap[next_index];
+				printf("next index: %lu",next_index);
+				next_index += sz;
+			} else error("HEAP FULL after GC\n");
 		} else {
 			error("HEAP FULL");
 		}
