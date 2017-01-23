@@ -191,7 +191,8 @@ int sp = 0;
 int fp = 0;
 int rp = 0;
 int state = 0;
-static size_t next_index = 0;
+size_t next_index = 0;
+int t = 0;
 
 char *currentHeap;
 char *sourceHeap;
@@ -206,6 +207,7 @@ int collectGarbage(void) {
 	char * scan;
 	ObjRef objRef, innerRef;
 
+    t = 1;
 	/* swap heaps */
 	temp = currentHeap;
 	currentHeap = sourceHeap;
@@ -215,20 +217,26 @@ int collectGarbage(void) {
 
 	for(i = 0; i <= sp; i++) {
 		if(stack[i].isObjRef) {
+            printf("relocating STACK\n");
 			stack[i].u.objRef = relocate(stack[i].u.objRef);
 		}
 	}
+    printf("%d RIGHT AFTER STACK: %ld\n", t, next_index);
 	for(i = 0; i <= rp; i++) {
 		if(return_register[i].isObjRef) {
+            printf("relocating REGISTER\n");
 			return_register[i].u.objRef = relocate(return_register[i].u.objRef);
 		}
 	}
+    printf("%d RIGHT AFTER REGISTER: %ld\n", t, next_index);
 	for(i = 0; i < sdaVariables; i++) {
 		if(global[i].isObjRef) {
+            printf("relocating GLOBAL\n");
             global[i].u.objRef = relocate(global[i].u.objRef);
 			/* COPY ROOT OBJECTS */
 		}
 	}
+    printf("%d RIGHT AFTER GLOBAL: %ld\n",t, next_index);
 
 	/* scan phase */
 
@@ -245,6 +253,8 @@ int collectGarbage(void) {
 		}
 		scan += GET_SIZE(objRef);
 	}
+
+    printf("%d RIGHT AFTER GC: %ld\n", t, next_index);
 	
 	/*
 	 * return 0 wenn alles ok,
@@ -258,7 +268,9 @@ void * copyObjectToFreeMem(ObjRef orig) {
 
 	void * pointer;
 
-	pointer = myMalloc(orig->size);
+    printf("copy %p", (void *)orig);
+
+	pointer = myMalloc(GET_SIZE(orig));
 	if(pointer == NULL) {
 		error("HEAP IS FULL, can't relocate");
 	}
@@ -270,7 +282,8 @@ void * copyObjectToFreeMem(ObjRef orig) {
 
 ObjRef relocate(ObjRef orig) {
 	ObjRef copy;
-	int tmp_index;
+    int tmp_index;
+    printf("relocating %p\n", (void *)orig);
 	if(orig == NULL) {
 		/* relocate(nil) = nil */
 		copy = NULL;
@@ -297,11 +310,14 @@ void * myMalloc(size_t sz) {
     if(sz == 0 || sz > heapsize/2) {
         return NULL;
     }
-
+    if(t == 1) {
+        printf("%d normal call %lu\n", t, next_index);
+    }
     pointer = &currentHeap[next_index];
     next_index += sz;
     if(next_index >= heapsize/2) {
         if(collectGarbage() == 0) {
+            t = 0;
 			pointer = &currentHeap[next_index];
 			next_index += sz;
 		} else {
