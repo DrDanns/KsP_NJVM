@@ -72,6 +72,7 @@
 #define REGISTER_SIZE 10
 
 void * myMalloc(size_t sz);
+int sdaVariables;
 
 void error(char msg[]){
 	printf("Error: %s\n",msg);
@@ -221,8 +222,9 @@ int collectGarbage() {
 			return_register[i].u.objRef = relocate(return_register[i].u.objRef);
 		}
 	}
-	for(i = 0; i <= 5; i++) {
+	for(i = 0; i <= sdaVariables; i++) {
 		if(global[i].isObjRef) {
+            global[i].u.objRef = relocate(global[i].u.objRef);
 			/* COPY ROOT OBJECTS */
 		}
 	}
@@ -240,7 +242,7 @@ int collectGarbage() {
 				innerRef += GET_SIZE(innerRef);
 			}
 		}
-		scan += objRef -> size;
+		scan += GET_SIZE(objRef);
 	}
 	
 	/*
