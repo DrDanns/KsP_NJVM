@@ -259,8 +259,7 @@ void * copyObjectToFreeMem(ObjRef orig) {
 
 	pointer = myMalloc(orig->size);
 	((ObjRef)pointer)->size = orig->size;
-	/* HIER MUSS NOCH WAS ANDERES HIN */
-	strcpy(((ObjRef)pointer)->data , orig->data);
+	*((ObjRef)pointer)->data = *orig->data;
 
 	return pointer;
 }
