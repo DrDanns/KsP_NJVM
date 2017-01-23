@@ -208,6 +208,8 @@ int collectGarbage() {
 	temp = currentHeap;
 	currentHeap = sourceHeap;
 	sourceHeap = temp;
+    /* reset index for new heap */
+    next_index = 0;
 
 	for(i = 0; i <= sp; i++) {
 		if(stack[i].isObjRef) {
@@ -235,7 +237,7 @@ int collectGarbage() {
 			innerRef = *GET_REFS(objRef);
 			for (i = 0; i < GET_SIZE(objRef); i++) {
 				innerRef = relocate(innerRef);
-				innerRef += innerRef -> size;
+				innerRef += GET_SIZE(innerRef);
 			}
 		}
 		scan += objRef -> size;
