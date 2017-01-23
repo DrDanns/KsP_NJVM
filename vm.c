@@ -200,7 +200,7 @@ int collectGarbage(void);
 ObjRef relocate(ObjRef orig);
 void * copyObjectToFreeMem(ObjRef orig);
 
-int collectGarbage() {
+int collectGarbage(void) {
 	int i;
 	char * temp;
 	char * scan;
@@ -259,6 +259,9 @@ void * copyObjectToFreeMem(ObjRef orig) {
 	void * pointer;
 
 	pointer = myMalloc(orig->size);
+	if(pointer == NULL) {
+		error("HEAP IS FULL, can't relocate");
+	}
 	((ObjRef)pointer)->size = orig->size;
 	*((ObjRef)pointer)->data = *orig->data;
 
@@ -267,6 +270,7 @@ void * copyObjectToFreeMem(ObjRef orig) {
 
 ObjRef relocate(ObjRef orig) {
 	ObjRef copy;
+	int tmp_index;
 	if(orig == NULL) {
 		/* relocate(nil) = nil */
 		copy = NULL;
@@ -277,9 +281,10 @@ ObjRef relocate(ObjRef orig) {
 	}
 	else {
 		/* Objekt muss noch kopiert werden */
+		tmp_index = next_index;
 		copy = copyObjectToFreeMem(orig);
 		/* im Original: setze Broken-Heart-Flag und Forward-Pointer */
-		orig->size = next_index | BROKEN_HEART_FL;
+		orig->size = tmp_index | BROKEN_HEART_FL;
 	}
 	/* Adresse des kopierten Objektes zurück */
 	return copy;
@@ -296,7 +301,12 @@ void * myMalloc(size_t sz) {
     pointer = &currentHeap[next_index];
     next_index += sz;
     if(next_index >= heapsize/2) {
-        error("HEAP FULL, garbage collector!");
+        if(collectGarbage() == 0) {
+			pointer = &currentHeap[next_index];
+			next_index += sz;
+		} else {
+			error("HEAP FULL");
+		}
     }
 
     return pointer;
