@@ -222,7 +222,7 @@ int collectGarbage() {
 			return_register[i].u.objRef = relocate(return_register[i].u.objRef);
 		}
 	}
-	for(i = 0; i <= sdaVariables; i++) {
+	for(i = 0; i < sdaVariables; i++) {
 		if(global[i].isObjRef) {
             global[i].u.objRef = relocate(global[i].u.objRef);
 			/* COPY ROOT OBJECTS */
