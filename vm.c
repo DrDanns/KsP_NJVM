@@ -236,12 +236,17 @@ int collectGarbage(void) {
 			/* COPY ROOT OBJECTS */
 		}
 	}
-    printf("%d RIGHT AFTER GLOBAL: %ld\n",t, next_index);
+	if(bip.op1 != NULL) bip.op1 = relocate(bip.op1);
+	if(bip.op2 != NULL) bip.op2 = relocate(bip.op2);
+	if(bip.res != NULL) bip.res = relocate(bip.res);
+	if(bip.rem != NULL) bip.rem = relocate(bip.rem);
+	printf("%d RIGHT AFTER GLOBAL: %ld\n",t, next_index);
 
 	/* scan phase */
 
 	scan = currentHeap;
-	while (scan != &currentHeap[next_index] /* <- zeigt das auf den nächsten freien Platz ??? */){
+	while (scan != &currentHeap[next_index]){
+		printf("scan..\n");
 		/* es gibt noch Objekte , die gescannt werden müssen */
 		objRef = (ObjRef)scan;
 		if (!IS_PRIM(objRef)) {
@@ -251,6 +256,7 @@ int collectGarbage(void) {
 				innerRef += GET_SIZE(innerRef);
 			}
 		}
+		printf("scan: %p, currentHeap[ni]: %p, gsize: %d\n", (void *)scan, (void *)&currentHeap[next_index],GET_SIZE(objRef));
 		scan += GET_SIZE(objRef);
 	}
 
@@ -319,11 +325,14 @@ void * myMalloc(size_t sz) {
         if(collectGarbage() == 0) {
 			printf("\ngarbage collected!!\n");
             t = 0;
-			if(next_index >= heapsize/2) {
+			if(next_index < heapsize/2) {
 				pointer = &currentHeap[next_index];
 				printf("next index: %lu",next_index);
 				next_index += sz;
-			} else error("HEAP FULL after GC\n");
+			} else {
+				printf("next_index: %lu\n",next_index);
+				error("HEAP FULL after GC\n");
+			}
 		} else {
 			error("HEAP FULL");
 		}
