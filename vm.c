@@ -201,6 +201,8 @@ void * copyObjectToFreeMem(ObjRef orig);
 int collectGarbage() {
 	int i;
 	char * temp;
+	char * scan;
+	ObjRef objRef, innerRef;
 
 	/* swap heaps */
 	temp = currentHeap;
@@ -209,12 +211,12 @@ int collectGarbage() {
 
 	for(i = 0; i <= sp; i++) {
 		if(stack[i].isObjRef) {
-			/* COPY ROOT OBJECTS */
+			stack[i].u.objRef = relocate(stack[i].u.objRef);
 		}
 	}
 	for(i = 0; i <= rp; i++) {
 		if(return_register[i].isObjRef) {
-			/* COPY ROOT OBJECTS */
+			return_register[i].u.objRef = relocate(return_register[i].u.objRef);
 		}
 	}
 	for(i = 0; i <= 5; i++) {
@@ -225,6 +227,20 @@ int collectGarbage() {
 
 	/* scan phase */
 
+	scan = currentHeap;
+	while (scan != &currentHeap[next_index] /* <- zeigt das auf den nächsten freien Platz ??? */){
+		/* es gibt noch Objekte , die gescannt werden müssen */
+		objRef = (ObjRef)scan;
+		if (!IS_PRIM(objRef)) {
+			innerRef = *GET_REFS(objRef);
+			for (i = 0; i < GET_SIZE(objRef); i++) {
+				innerRef = relocate(innerRef);
+				innerRef += innerRef -> size;
+			}
+		}
+		scan += objRef -> size;
+	}
+	
 	/*
 	 * return 0 wenn alles ok,
 	 * das kann dann gecheckt werden wo sie aufgerufen wurde
