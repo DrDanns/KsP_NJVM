@@ -43,6 +43,8 @@ int main(int argc, char *argv[]){
 			}
 		} else if (strcmp(argv[i],"--gcpurge") == 0){
 			gcpurge = TRUE;
+		} else if (strcmp(argv[i],"--gcstats") == 0){
+			gcstats = TRUE;
 		} else if (strcmp(argv[i],"--heap") == 0){
 			i++;
 			heapsize = strtol(argv[i], &rest, 10);
@@ -113,6 +115,7 @@ int main(int argc, char *argv[]){
 		debug(instructionSize,p, sdaVariables);
 	} else execute(instructionSize,p);
 	free(p);
+	if(gcstats) collectGarbageStats();
 	printf("Ninja Virtual Machine stopped\n");
 	
 	return 0;

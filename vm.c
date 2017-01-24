@@ -193,6 +193,9 @@ int rp = 0;
 int state = 0;
 size_t next_index = 0;
 boolean gcpurge = FALSE;
+boolean gcstats = FALSE;
+
+int allocated, living;
 
 char *currentHeap;
 char *sourceHeap;
@@ -277,6 +280,87 @@ int collectGarbage(void) {
 	return 0;
 }
 
+int collectGarbageStats(void) {
+	int i;
+	size_t scan_index;
+	char * temp;
+	ObjRef objRef, innerRef;
+
+	printf("Garbage Collector:\n\t%d objects allocated since last collection\n",allocated);
+	/* swap heaps */
+	temp = currentHeap;
+	currentHeap = sourceHeap;
+	sourceHeap = temp;
+    /* reset index for new heap */
+    next_index = 0;
+	scan_index = next_index;
+
+	for(i = 0; i <= sp; i++) {
+		if(stack[i].isObjRef) {
+			stack[i].u.objRef = relocate(stack[i].u.objRef);
+			 living++;
+		}
+	}
+
+	for(i = 0; i <= rp; i++) {
+		if(return_register[i].isObjRef) {
+			return_register[i].u.objRef = relocate(return_register[i].u.objRef);
+			 living++;
+		}
+	}
+
+	for(i = 0; i < sdaVariables; i++) {
+		if(global[i].isObjRef) {
+            global[i].u.objRef = relocate(global[i].u.objRef);
+			 living++;
+		}
+	}
+
+	if(bip.op1 != NULL) {bip.op1 = relocate(bip.op1); living++;}
+	if(bip.op2 != NULL) {bip.op2 = relocate(bip.op2); living++;}
+	if(bip.res != NULL) {bip.res = relocate(bip.res); living++;}
+	if(bip.rem != NULL) {bip.rem = relocate(bip.rem); living++;}
+
+	/* scan phase */
+	while (scan_index < next_index){
+		/* es gibt noch Objekte , die gescannt werden müssen */
+		objRef = (ObjRef)&currentHeap[scan_index];
+		if (!IS_PRIM(objRef)) {
+
+            for(i = 0; i < GET_SIZE(objRef); i++) {
+                innerRef = getIndexedObjRef(objRef, i);
+                innerRef = relocate(innerRef);
+				living++;
+                setObjRef(objRef, innerRef, i);
+            }
+		}
+        if(IS_PRIM(objRef)) {
+            scan_index += sizeof(unsigned int) + (GET_SIZE(objRef) * sizeof(unsigned char));
+
+        } else if(IS_NULL(objRef)) {
+            scan_index += sizeof(unsigned int) + (sizeof(NULL));
+        } else {
+            scan_index += sizeof(unsigned int) + (GET_SIZE(objRef) * sizeof(ObjRef));
+        }
+
+	}
+	printf("\t%d objects copied during this collection\n", living);
+	if(gcpurge IS_TRUE){
+		temp = sourceHeap;
+		while(temp < sourceHeap + heapsize/2){
+			*temp = 0;
+			temp++;
+		}	
+	}
+	allocated = 0;
+	/*
+	 * return 0 wenn alles ok,
+	 * das kann dann gecheckt werden wo sie aufgerufen wurde
+	 * und ggf. beendet dann die VM
+	 * */
+	return 0;
+}
+
 void * copyObjectToFreeMem(ObjRef orig) {
 
 	void * pointer;
@@ -323,7 +407,7 @@ ObjRef relocate(ObjRef orig) {
 }
 
 void * myMalloc(size_t sz) {
-
+	
     void * pointer;
 
     if(sz <= 0 || sz > heapsize/2) {
@@ -333,7 +417,8 @@ void * myMalloc(size_t sz) {
     pointer = &currentHeap[next_index];
     next_index += sz;
     if(next_index >= heapsize/2) {
-        if(collectGarbage() == 0) {
+		if(gcstats IS_TRUE ? collectGarbageStats() == 0 : collectGarbage() == 0) {
+			/* printf("\ngarbage collected!!\n"); */
 			if(next_index < heapsize/2) {
 				pointer = &currentHeap[next_index];
 				next_index += sz;
@@ -344,7 +429,7 @@ void * myMalloc(size_t sz) {
 			error("HEAP FULL");
 		}
     }
-
+	allocated++;
     return pointer;
 }
 
