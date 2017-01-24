@@ -192,6 +192,7 @@ int fp = 0;
 int rp = 0;
 int state = 0;
 size_t next_index = 0;
+boolean gcpurge = FALSE;
 
 char *currentHeap;
 char *sourceHeap;
@@ -256,12 +257,22 @@ int collectGarbage(void) {
         if(IS_PRIM(objRef)) {
             scan_index += sizeof(unsigned int) + (GET_SIZE(objRef) * sizeof(unsigned char));
 
+        } else if(IS_NULL(objRef)) {
+            scan_index += sizeof(unsigned int) + (sizeof(NULL));
         } else {
             scan_index += sizeof(unsigned int) + (GET_SIZE(objRef) * sizeof(ObjRef));
         }
 
 	}
 
+	if(gcpurge IS_TRUE){
+		temp = sourceHeap;
+		while(temp < sourceHeap + heapsize/2){
+			*temp = 0;
+			temp++;
+		}	
+	}
+	
 	/*
 	 * return 0 wenn alles ok,
 	 * das kann dann gecheckt werden wo sie aufgerufen wurde
@@ -326,8 +337,7 @@ void * myMalloc(size_t sz) {
     pointer = &currentHeap[next_index];
     next_index += sz;
     if(next_index >= heapsize/2) {
-		printf("\nSTATE: %d\n\n", state);
-        if(collectGarbage() == 0) {
+		if(collectGarbage() == 0) {
 			printf("\ngarbage collected!!\n");
 			if(next_index < heapsize/2) {
 				pointer = &currentHeap[next_index];
@@ -922,7 +932,7 @@ void debug(int argn, unsigned int program[], int globaln){
 				printf("Showing heap information:\n");
 				printf("\theapsize:\t 2 * %d\n", heapsize/2);
 				printf("\tused:\t\t%lu\n", next_index);
-				printf("\tfree:\t\t%lu\n", heapsize/2 - next_index);
+				printf("\tfree:\t\t%d\n", (signed)(heapsize/2 - next_index));
 			}
 		} else if(strcmp(input,"breakpoint") == 0|| strcmp(input,"b") == 0){
 			printf("DEBUG [breakpoint]: ");

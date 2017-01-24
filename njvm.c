@@ -41,6 +41,8 @@ int main(int argc, char *argv[]){
 				if(!manualStackSize) setStacksize(stacksize);
 				manualStackSize = TRUE;
 			}
+		} else if (strcmp(argv[i],"--gcpurge") == 0){
+			gcpurge = TRUE;
 		} else if (strcmp(argv[i],"--heap") == 0){
 			i++;
 			heapsize = strtol(argv[i], &rest, 10);
