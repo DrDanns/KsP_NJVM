@@ -196,6 +196,7 @@ boolean gcpurge = FALSE;
 boolean gcstats = FALSE;
 
 int allocated, living;
+int allocatedBytes, livingBytes;
 
 char *currentHeap;
 char *sourceHeap;
@@ -286,7 +287,7 @@ int collectGarbageStats(void) {
 	char * temp;
 	ObjRef objRef, innerRef;
 
-	printf("Garbage Collector:\n\t%d objects allocated since last collection\n",allocated);
+	printf("Garbage Collector:\n\t%d objects (%d bytes) allocated since last collection\n",allocated,allocatedBytes);
 	/* swap heaps */
 	temp = currentHeap;
 	currentHeap = sourceHeap;
@@ -344,13 +345,14 @@ int collectGarbageStats(void) {
         }
 
 	}
-	printf("\t%d objects copied during this collection\n", living);
+	printf("\t%d objects (%d bytes) copied during this collection\n", living, livingBytes);
+	printf("\t%d of %d bytes free after this collection", (heapsize/2) - livingBytes, heapsize/2);
 	if(gcpurge IS_TRUE){
 		temp = sourceHeap;
 		while(temp < sourceHeap + heapsize/2){
 			*temp = 0;
 			temp++;
-		}	
+		}
 	}
 	allocated = 0;
 	/*
@@ -377,8 +379,10 @@ void * copyObjectToFreeMem(ObjRef orig) {
 	((ObjRef)pointer)->size = orig->size;
     if(IS_PRIM(orig)) {
         memcpy(((ObjRef)pointer)->data, orig->data, GET_SIZE(orig) * sizeof(unsigned char));
+		livingBytes += GET_SIZE(orig) * sizeof(unsigned char);
     } else {
         memcpy(((ObjRef)pointer)->data, orig->data, GET_SIZE(orig) * sizeof(ObjRef));
+		livingBytes += GET_SIZE(orig) * sizeof(ObjRef);
     }
 
 	return pointer;
@@ -430,6 +434,7 @@ void * myMalloc(size_t sz) {
 		}
     }
 	allocated++;
+	allocatedBytes += sz;
     return pointer;
 }
 
