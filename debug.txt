@@ -1,4 +1,43 @@
-call debug mode:
-./njvm --debug
+Debug Mode (Ninja Virtual Machine)
 
-DEBUG: inspect, list, breakpoint, step, run, quit?
+Open file in debug mode:
+./njvm --debug <filename>
+
+
+Operations (they can also be called by typing the first letter):
+
+1. inspect:
+	
+	1.1. stack:
+		Shows the stacks current state.
+	1.2. data:
+		Shows the adresses of the global variables.
+	1.3. register:
+		Shows the adresses saved in the register
+	1.4. object:
+		Shows value or contained objects of a selected (by adress) object
+	1.5. tree:
+		Shows all elements on the stack including their contained objects and values
+	1.6. heap:
+		Shows heapsize and how much of it is used and free
+
+2. list:
+	
+	Shows all instructions of the executed file.
+	
+3. breakpoint:
+	
+	First this option shows where the breakpoint is set at the moment ("cleared" means there is no breakpoint set).
+	Then it expects an input, either a positve integer to set breakpoint at the instruction with this number or "-1" to clear the set breakpoint.
+	
+4. step:
+
+	Executes next instruction.
+	
+5. run:
+
+	Executes all instructions until the breakpoint or "halt" is reached.
+	
+6. quit:
+
+	Closes the debugger and exits the program.
