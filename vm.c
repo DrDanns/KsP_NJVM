@@ -217,23 +217,19 @@ int collectGarbage(void) {
 
 	for(i = 0; i <= sp; i++) {
 		if(stack[i].isObjRef) {
-
 			stack[i].u.objRef = relocate(stack[i].u.objRef);
 		}
 	}
 
 	for(i = 0; i <= rp; i++) {
 		if(return_register[i].isObjRef) {
-
 			return_register[i].u.objRef = relocate(return_register[i].u.objRef);
 		}
 	}
 
 	for(i = 0; i < sdaVariables; i++) {
 		if(global[i].isObjRef) {
-
             global[i].u.objRef = relocate(global[i].u.objRef);
-			/* COPY ROOT OBJECTS */
 		}
 	}
 
@@ -270,9 +266,9 @@ int collectGarbage(void) {
 		while(temp < sourceHeap + heapsize/2){
 			*temp = 0;
 			temp++;
-		}	
+		}
 	}
-	
+
 	/*
 	 * return 0 wenn alles ok,
 	 * das kann dann gecheckt werden wo sie aufgerufen wurde
@@ -337,8 +333,7 @@ void * myMalloc(size_t sz) {
     pointer = &currentHeap[next_index];
     next_index += sz;
     if(next_index >= heapsize/2) {
-		if(collectGarbage() == 0) {
-			printf("\ngarbage collected!!\n");
+        if(collectGarbage() == 0) {
 			if(next_index < heapsize/2) {
 				pointer = &currentHeap[next_index];
 				next_index += sz;
