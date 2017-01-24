@@ -56,13 +56,13 @@
 #define SIGN_EXTEND(i) ((i) & 0x00800000 ? (i) | 0xFF000000 : ((i) & 0x00FFFFF))
 
 #define MSB (1 << (8 * sizeof(unsigned int) - 1))
-#define BROKEN_HEART_FL (1 << (sizeof(unsigned int) - 2))
+#define BROKEN_HEART_FL (1 << (8*sizeof(unsigned int) - 2))
 #define IS_BROKEN(objRef) ((( objRef)->size & BROKEN_HEART_FL) == 0)
 #define IS_PRIM(objRef) ((( objRef)->size & MSB) == 0)
-#define GET_SIZE(objRef) ((objRef)->size & ~MSB)
+#define GET_SIZE(objRef) ((objRef)->size & ~MSB & ~BROKEN_HEART_FL)
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
 #define IS_NULL(objRef) ((void*)objRef == NULL)
-#define GET_FW_POINTER(objRef) ((ObjRef)&currentHeap[((objRef -> size) & 0x0FFFFFFF)])
+#define GET_FW_POINTER(objRef) ((ObjRef)&currentHeap[((objRef -> size) & ~MSB & ~BROKEN_HEART_FL)])
 
 #define MAX_STACK_SIZE 268435456
 #define STANDARD_STACK_SIZE 65536
@@ -307,7 +307,7 @@ ObjRef relocate(ObjRef orig) {
 		tmp_index = next_index;
 		copy = copyObjectToFreeMem(orig);
 		/* im Original: setze Broken-Heart-Flag und Forward-Pointer */
-		orig->size = tmp_index | BROKEN_HEART_FL;
+		orig->size = tmp_index | BROKEN_HEART_FL | ((copy)->size & MSB);
 	}
 	/* Adresse des kopierten Objektes zurück */
 	return copy;
