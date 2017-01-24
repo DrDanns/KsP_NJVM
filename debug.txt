@@ -1,0 +1,4 @@
+call debug mode:
+./njvm --debug
+
+DEBUG: inspect, list, breakpoint, step, run, quit?
