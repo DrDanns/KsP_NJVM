@@ -192,7 +192,6 @@ int fp = 0;
 int rp = 0;
 int state = 0;
 size_t next_index = 0;
-int t = 0;
 
 char *currentHeap;
 char *sourceHeap;
@@ -207,7 +206,6 @@ int collectGarbage(void) {
 	char * temp;
 	ObjRef objRef, innerRef;
 
-    t = 1;
 	/* swap heaps */
 	temp = currentHeap;
 	currentHeap = sourceHeap;
@@ -218,54 +216,52 @@ int collectGarbage(void) {
 
 	for(i = 0; i <= sp; i++) {
 		if(stack[i].isObjRef) {
-            printf("relocating STACK\n");
+
 			stack[i].u.objRef = relocate(stack[i].u.objRef);
 		}
 	}
-    printf("%d RIGHT AFTER STACK: %ld\n", t, next_index);
+
 	for(i = 0; i <= rp; i++) {
 		if(return_register[i].isObjRef) {
-            printf("relocating REGISTER\n");
+
 			return_register[i].u.objRef = relocate(return_register[i].u.objRef);
 		}
 	}
-    printf("%d RIGHT AFTER REGISTER: %ld\n", t, next_index);
+
 	for(i = 0; i < sdaVariables; i++) {
 		if(global[i].isObjRef) {
-            printf("relocating GLOBAL\n");
+
             global[i].u.objRef = relocate(global[i].u.objRef);
 			/* COPY ROOT OBJECTS */
 		}
 	}
-	printf("%d RIGHT AFTER GLOBAL: %ld\n", t, next_index);
-	printf("relocating BIP\n");
+
 	if(bip.op1 != NULL) bip.op1 = relocate(bip.op1);
 	if(bip.op2 != NULL) bip.op2 = relocate(bip.op2);
 	if(bip.res != NULL) bip.res = relocate(bip.res);
 	if(bip.rem != NULL) bip.rem = relocate(bip.rem);
-	printf("%d RIGHT AFTER BIP: %ld\n", t, next_index);
 
 	/* scan phase */
 	while (scan_index < next_index){
-        printf("scan: %ld\n", scan_index);
-        printf("next: %ld\n", next_index);
 		/* es gibt noch Objekte , die gescannt werden müssen */
 		objRef = (ObjRef)&currentHeap[scan_index];
 		if (!IS_PRIM(objRef)) {
-			printf("im in here\n");
 
             for(i = 0; i < GET_SIZE(objRef); i++) {
                 innerRef = getIndexedObjRef(objRef, i);
                 innerRef = relocate(innerRef);
                 setObjRef(objRef, innerRef, i);
-                scan_index += GET_SIZE(innerRef);
             }
 		}
-		scan_index += GET_SIZE(objRef);
+        if(IS_PRIM(objRef)) {
+            scan_index += sizeof(unsigned int) + (GET_SIZE(objRef) * sizeof(unsigned char));
+
+        } else {
+            scan_index += sizeof(unsigned int) + (GET_SIZE(objRef) * sizeof(ObjRef));
+        }
+
 	}
 
-    printf("%d RIGHT AFTER GC: %ld\n", t, next_index);
-	
 	/*
 	 * return 0 wenn alles ok,
 	 * das kann dann gecheckt werden wo sie aufgerufen wurde
@@ -278,14 +274,21 @@ void * copyObjectToFreeMem(ObjRef orig) {
 
 	void * pointer;
 
-    printf("copy %p ", (void *)orig);
+    if(IS_PRIM(orig)) {
+        pointer = myMalloc(sizeof(unsigned int) + (GET_SIZE(orig) * sizeof(unsigned char)));
 
-	pointer = myMalloc(sizeof(unsigned int) + (GET_SIZE(orig) * sizeof(ObjRef)));
+    } else {
+        pointer = myMalloc(sizeof(unsigned int) + (GET_SIZE(orig) * sizeof(ObjRef)));
+    }
 	if(pointer == NULL) {
 		error("HEAP IS FULL, can't relocate");
 	}
 	((ObjRef)pointer)->size = orig->size;
-	*((ObjRef)pointer)->data = *orig->data;
+    if(IS_PRIM(orig)) {
+        memcpy(((ObjRef)pointer)->data, orig->data, GET_SIZE(orig) * sizeof(unsigned char));
+    } else {
+        memcpy(((ObjRef)pointer)->data, orig->data, GET_SIZE(orig) * sizeof(ObjRef));
+    }
 
 	return pointer;
 }
@@ -293,7 +296,6 @@ void * copyObjectToFreeMem(ObjRef orig) {
 ObjRef relocate(ObjRef orig) {
 	ObjRef copy;
     int tmp_index;
-    printf("relocating %p\n", (void *)orig);
 	if(orig == NULL) {
 		/* relocate(nil) = nil */
 		copy = NULL;
@@ -301,10 +303,8 @@ ObjRef relocate(ObjRef orig) {
 	else if(IS_BROKEN(orig)) {
 		/* Objekt ist bereits kopiert, Forward-Pointer gesetzt */
 		copy = GET_FW_POINTER(orig);
-		printf("BROKEN\n");
 	}
 	else {
-		printf("COPY\n");
 		/* Objekt muss noch kopiert werden */
 		tmp_index = next_index;
 		copy = copyObjectToFreeMem(orig);
@@ -322,22 +322,17 @@ void * myMalloc(size_t sz) {
     if(sz <= 0 || sz > heapsize/2) {
         return NULL;
     }
-    if(t == 1) {
-        printf("%d normal call %lu\n", t, next_index);
-    }
+
     pointer = &currentHeap[next_index];
     next_index += sz;
     if(next_index >= heapsize/2) {
 		printf("\nSTATE: %d\n\n", state);
         if(collectGarbage() == 0) {
 			printf("\ngarbage collected!!\n");
-            t = 0;
 			if(next_index < heapsize/2) {
 				pointer = &currentHeap[next_index];
-				printf("inside next index: %lu\n",next_index);
 				next_index += sz;
 			} else {
-				printf("outside next_index: %lu\n",next_index);
 				error("HEAP FULL after GC\n");
 			}
 		} else {
