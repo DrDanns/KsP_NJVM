@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
 	StackSlot *tempStackSlot;
 	for(i=1; i < argc; i++){
 		if(strcmp(argv[i],"--help") == 0){
-			printf("Usage: ./njvm [options] <code file>\nOptions:\n  --debug\t   start virtual machine in debug mode\n  --version\t   show version and exit\n  --help\t   show this help and exit\n");
+			printf("Usage: ./njvm [options] <code file>\nOptions:\n  --stack <n>\t   set stack size to n KBytes (default: n = 64)\n  --heap <n>\t   set heap size to n KBytes (default: n = 8192)\n  --gcstats\t   show garbage collection statistics\n  --gcpurge\t   purge old objects after collection\n  --debug\t   start virtual machine in debug mode\n  --version\t   show version and exit\n  --help\t   show this help and exit\n");
 			exit(0);
 		} else if(strcmp(argv[i],"--debug") == 0){
 			if ( i == (argc-1)) {
