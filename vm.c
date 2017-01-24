@@ -249,17 +249,17 @@ int collectGarbage(void) {
 	while (scan_index < next_index){
         printf("scan: %ld\n", scan_index);
         printf("next: %ld\n", next_index);
-
 		/* es gibt noch Objekte , die gescannt werden müssen */
 		objRef = (ObjRef)&currentHeap[scan_index];
 		if (!IS_PRIM(objRef)) {
 			printf("im in here\n");
 
-			innerRef = *GET_REFS(objRef);
-			for (i = 0; i < GET_SIZE(objRef); i++) {
-				innerRef = relocate(innerRef);
-				scan_index += GET_SIZE(innerRef);
-			}
+            for(i = 0; i < GET_SIZE(objRef); i++) {
+                innerRef = getIndexedObjRef(objRef, i);
+                innerRef = relocate(innerRef);
+                setObjRef(objRef, innerRef, i);
+                scan_index += GET_SIZE(innerRef);
+            }
 		}
 		scan_index += GET_SIZE(objRef);
 	}
@@ -280,7 +280,7 @@ void * copyObjectToFreeMem(ObjRef orig) {
 
     printf("copy %p ", (void *)orig);
 
-	pointer = myMalloc(GET_SIZE(orig));
+	pointer = myMalloc(sizeof(unsigned int) + (GET_SIZE(orig) * sizeof(ObjRef)));
 	if(pointer == NULL) {
 		error("HEAP IS FULL, can't relocate");
 	}
@@ -890,10 +890,11 @@ void debug(int argn, unsigned int program[], int globaln){
 				printf("Object reference?\n");
 				if(scanf("%p", &pointer) IS_TRUE){
 					objRef = (ObjRef)pointer;
-					if(IS_PRIM(objRef)){ 
+					if(IS_PRIM(objRef)){
+						/* 
 						printf("value : "); 
-                        printBig(objRef); 
-						printf("\n"); 
+                        printBig(objRef);
+						printf("\n");  */
 					} else { 
 						printf("Contained objects: %d\n",GET_SIZE(objRef)); 
 						for(i = 0; i < GET_SIZE(objRef); i++){ 
