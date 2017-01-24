@@ -203,8 +203,8 @@ void * copyObjectToFreeMem(ObjRef orig);
 
 int collectGarbage(void) {
 	int i;
+	size_t scan_index;
 	char * temp;
-	char * scan;
 	ObjRef objRef, innerRef;
 
     t = 1;
@@ -214,6 +214,7 @@ int collectGarbage(void) {
 	sourceHeap = temp;
     /* reset index for new heap */
     next_index = 0;
+	scan_index = next_index;
 
 	for(i = 0; i <= sp; i++) {
 		if(stack[i].isObjRef) {
@@ -243,21 +244,22 @@ int collectGarbage(void) {
 	printf("%d RIGHT AFTER GLOBAL: %ld\n",t, next_index);
 
 	/* scan phase */
+	while (scan_index < next_index){
+        printf("scan: %ld\n", scan_index);
+        printf("next: %ld\n", next_index);
 
-	scan = currentHeap;
-	while (scan != &currentHeap[next_index]){
-		printf("scan..\n");
 		/* es gibt noch Objekte , die gescannt werden müssen */
-		objRef = (ObjRef)scan;
+		objRef = (ObjRef)&currentHeap[scan_index];
 		if (!IS_PRIM(objRef)) {
+			printf("im in here");
+
 			innerRef = *GET_REFS(objRef);
 			for (i = 0; i < GET_SIZE(objRef); i++) {
 				innerRef = relocate(innerRef);
-				innerRef += GET_SIZE(innerRef);
+				scan_index += GET_SIZE(innerRef);
 			}
 		}
-		printf("scan: %p, currentHeap[ni]: %p, gsize: %d\n", (void *)scan, (void *)&currentHeap[next_index],GET_SIZE(objRef));
-		scan += GET_SIZE(objRef);
+		scan_index += GET_SIZE(objRef);
 	}
 
     printf("%d RIGHT AFTER GC: %ld\n", t, next_index);
@@ -297,8 +299,10 @@ ObjRef relocate(ObjRef orig) {
 	else if(IS_BROKEN(orig)) {
 		/* Objekt ist bereits kopiert, Forward-Pointer gesetzt */
 		copy = GET_FW_POINTER(orig);
+		printf("BROKEN\n");
 	}
 	else {
+		printf("COPY\n");
 		/* Objekt muss noch kopiert werden */
 		tmp_index = next_index;
 		copy = copyObjectToFreeMem(orig);
