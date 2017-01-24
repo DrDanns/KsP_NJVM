@@ -16,6 +16,7 @@ char option[2] = "--";
 int main(int argc, char *argv[]){
 	boolean manualStackSize = FALSE;
 	boolean manualHeapSize = FALSE;
+	StackSlot *tempStackSlot;
 	for(i=1; i < argc; i++){
 		if(strcmp(argv[i],"--help") == 0){
 			printf("Usage: ./njvm [options] <code file>\nOptions:\n  --debug\t   start virtual machine in debug mode\n  --version\t   show version and exit\n  --help\t   show this help and exit\n");
@@ -87,6 +88,10 @@ int main(int argc, char *argv[]){
 		exit(99);
 	}
 	global = malloc(sdaVariables * sizeof(StackSlot));
+	tempStackSlot = global;
+	for(i = 0; i < sdaVariables; i++){
+		tempStackSlot[i].u.objRef = NULL;
+	}
 	
 	p = malloc(instructionSize * sizeof(int));
 	

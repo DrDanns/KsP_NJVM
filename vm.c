@@ -57,7 +57,7 @@
 
 #define MSB (1 << (8 * sizeof(unsigned int) - 1))
 #define BROKEN_HEART_FL (1 << (8*sizeof(unsigned int) - 2))
-#define IS_BROKEN(objRef) ((( objRef)->size & BROKEN_HEART_FL) == 0)
+#define IS_BROKEN(objRef) ((( objRef)->size & BROKEN_HEART_FL) != 0)
 #define IS_PRIM(objRef) ((( objRef)->size & MSB) == 0)
 #define GET_SIZE(objRef) ((objRef)->size & ~MSB & ~BROKEN_HEART_FL)
 #define GET_REFS(objRef) ((ObjRef *)(objRef)->data)
@@ -237,11 +237,13 @@ int collectGarbage(void) {
 			/* COPY ROOT OBJECTS */
 		}
 	}
+	printf("%d RIGHT AFTER GLOBAL: %ld\n", t, next_index);
+	printf("relocating BIP\n");
 	if(bip.op1 != NULL) bip.op1 = relocate(bip.op1);
 	if(bip.op2 != NULL) bip.op2 = relocate(bip.op2);
 	if(bip.res != NULL) bip.res = relocate(bip.res);
 	if(bip.rem != NULL) bip.rem = relocate(bip.rem);
-	printf("%d RIGHT AFTER GLOBAL: %ld\n",t, next_index);
+	printf("%d RIGHT AFTER BIP: %ld\n", t, next_index);
 
 	/* scan phase */
 	while (scan_index < next_index){
@@ -251,7 +253,7 @@ int collectGarbage(void) {
 		/* es gibt noch Objekte , die gescannt werden müssen */
 		objRef = (ObjRef)&currentHeap[scan_index];
 		if (!IS_PRIM(objRef)) {
-			printf("im in here");
+			printf("im in here\n");
 
 			innerRef = *GET_REFS(objRef);
 			for (i = 0; i < GET_SIZE(objRef); i++) {
@@ -276,7 +278,7 @@ void * copyObjectToFreeMem(ObjRef orig) {
 
 	void * pointer;
 
-    printf("copy %p", (void *)orig);
+    printf("copy %p ", (void *)orig);
 
 	pointer = myMalloc(GET_SIZE(orig));
 	if(pointer == NULL) {
@@ -326,15 +328,16 @@ void * myMalloc(size_t sz) {
     pointer = &currentHeap[next_index];
     next_index += sz;
     if(next_index >= heapsize/2) {
+		printf("\nSTATE: %d\n\n", state);
         if(collectGarbage() == 0) {
 			printf("\ngarbage collected!!\n");
             t = 0;
 			if(next_index < heapsize/2) {
 				pointer = &currentHeap[next_index];
-				printf("next index: %lu",next_index);
+				printf("inside next index: %lu\n",next_index);
 				next_index += sz;
 			} else {
-				printf("next_index: %lu\n",next_index);
+				printf("outside next_index: %lu\n",next_index);
 				error("HEAP FULL after GC\n");
 			}
 		} else {
@@ -822,7 +825,6 @@ void debug(int argn, unsigned int program[], int globaln){
 	char input[10];
 	
 	void *pointer;
-	StackSlot stackslot;
 	ObjRef objRef, objRefIndex;
 	if(argn < MEMORY_SIZE){
 		for(i = 0; i < argn; i++){
@@ -842,7 +844,7 @@ void debug(int argn, unsigned int program[], int globaln){
 		} else if(strcmp(input,"quit") == 0|| strcmp(input,"q") == 0){
 			exit(0);
 		} else if(strcmp(input,"inspect") == 0|| strcmp(input,"i") == 0){
-			printf("DEBUG [inspect]: stack, data, register, object, tree?\n");
+			printf("DEBUG [inspect]: stack, data, register, object, tree, heap?\n");
 			scanf("%s", &input[0]);
 			if(strcmp(input,"stack") == 0|| strcmp(input,"s") == 0){
 				if(sp == fp) printf("sp, fp");
@@ -855,7 +857,7 @@ void debug(int argn, unsigned int program[], int globaln){
 					if(stack[i].isObjRef){
 						if(IS_NULL(stack[i].u.objRef)) printf("Ref: NULL\n"); 
 					    else {
-							printf("Ref: %p\t", (void*)&stack[i]);
+							printf("Ref: %p\t", (void*)stack[i].u.objRef);
 							printf(IS_PRIM(stack[i].u.objRef) ? "Primitive\n" : "Record/Array\n"); 
 						}
 					} else {
@@ -866,24 +868,28 @@ void debug(int argn, unsigned int program[], int globaln){
 			} else if(strcmp(input,"data") == 0|| strcmp(input,"d") == 0) {
 				for(i = 0; i < globaln; i++){
 					printf("data[%04d]:\t", i);
-					if(IS_NULL(return_register[i].u.objRef)) printf("Ref : NULL\n"); 
-					else printf("Ref: %p\n", (void*)&return_register[i]);
+					if(IS_NULL(global[i].u.objRef)) printf("Ref : NULL\n"); 
+					else {
+							printf("Ref: %p\t", (void*)global[i].u.objRef);
+							printf(IS_PRIM(global[i].u.objRef) ? "Primitive\n" : "Record/Array\n"); 
+					}
 				}
 				printf("\t --- bottom of data ---\n");
 			} else if(strcmp(input,"register") == 0|| strcmp(input,"r") == 0) {
 				for(i = 0; i < REGISTER_SIZE; i++){
 					printf("register[%02d]:\t", i);
 					if(!IS_NULL(return_register[i].u.objRef)){
-					printBig(return_register[i].u.objRef);
-					} else {printf("NULL");}
-					printf("\n");
+					
+							printf("Ref: %p\t", (void*)return_register[i].u.objRef);
+							printf(IS_PRIM(return_register[i].u.objRef) ? "Primitive\n" : "Record/Array\n"); 
+					
+					} else {printf("NULL\n");}
 				}
 				printf("\t --- bottom of register ---\n");
 			} else if(strcmp(input,"object") == 0|| strcmp(input,"o") == 0) {
 				printf("Object reference?\n");
 				if(scanf("%p", &pointer) IS_TRUE){
-					stackslot = *(StackSlot *) pointer;
-					objRef = stackslot.u.objRef;
+					objRef = (ObjRef)pointer;
 					if(IS_PRIM(objRef)){ 
 						printf("value : "); 
                         printBig(objRef); 
@@ -916,6 +922,11 @@ void debug(int argn, unsigned int program[], int globaln){
 					}
 				}
 				printf("\t\t --- bottom of stack ---\n");
+			} else if(strcmp(input,"heap") == 0|| strcmp(input,"h") == 0) {
+				printf("Showing heap information:\n");
+				printf("\theapsize:\t 2 * %d\n", heapsize/2);
+				printf("\tused:\t\t%lu\n", next_index);
+				printf("\tfree:\t\t%lu\n", heapsize/2 - next_index);
 			}
 		} else if(strcmp(input,"breakpoint") == 0|| strcmp(input,"b") == 0){
 			printf("DEBUG [breakpoint]: ");

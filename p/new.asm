@@ -18,3 +18,6 @@ putf	1
 pushl	0
 pushc	9
 putf	2
+new	200
+drop	1
+new	200
